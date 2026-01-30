@@ -1,2 +1,23 @@
-# gloria-valentines
-Gloria’s Valentines
+# 💖 Gloria’s Valentine
+
+![Cover](cover.png)
+
+An interactive Valentine’s Day website created by Anthony for Gloria.
+
+## ✨ Features
+
+- Playful “Nope” button that refuses rejection
+- Background music that fades in
+- Confetti celebration
+- Floating “PRESS YES GLORIA” chant mode
+- 3 randomized Valentine reward options:
+  - 🌻 Sunflowers & Lilies
+  - 💌 A Love Letter
+  - 🎵 QR Code to "Sanctuary" by Joji
+
+---
+
+🌐 Live Site:  
+https://sneakayyy.github.io/gloria-valentine/
+
+Built with love (and mild chaos).
