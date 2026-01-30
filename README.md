@@ -1,6 +1,6 @@
 # 💖 Gloria’s Valentine
 
-![Cover](cover.png)
+![Cover](cover.PNG)
 
 An interactive Valentine’s Day website created by Anthony for Gloria.
 
