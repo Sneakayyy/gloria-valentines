@@ -1,0 +1,300 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gloria — Valentine’s 💘</title>
+
+  <style>
+    :root{--bg1:#fff1f6;--bg2:#ffe4ef;--ink:#2a2438;--pink:#ff4d8d;--pink2:#ff79a8;--card:#ffffffcc;--shadow:0 20px 60px rgba(0,0,0,.10);}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--ink);background:
+      radial-gradient(1200px 800px at 20% 10%,var(--bg2),transparent 60%),
+      radial-gradient(900px 700px at 80% 30%,#ffd1e3,transparent 55%),
+      linear-gradient(135deg,var(--bg1),#fff);overflow:hidden;}
+    .hearts{position:fixed;inset:0;pointer-events:none;opacity:.25;
+      background-image:
+        radial-gradient(circle at 10% 20%,#ff7aa8 0 2px,transparent 3px),
+        radial-gradient(circle at 70% 40%,#ff4d8d 0 2px,transparent 3px),
+        radial-gradient(circle at 35% 75%,#ff9ec3 0 2px,transparent 3px),
+        radial-gradient(circle at 85% 80%,#ff6fa1 0 2px,transparent 3px);
+      background-size:240px 240px,280px 280px,220px 220px,260px 260px;
+      filter:blur(.2px);z-index:0;}
+    .card{width:min(760px,92vw);background:var(--card);border:1px solid rgba(255,77,141,.25);
+      border-radius:28px;box-shadow:var(--shadow);padding:32px 28px;backdrop-filter:blur(10px);position:relative;z-index:1;}
+    h1{text-align:center;font-size:clamp(30px,5vw,52px);margin:8px 0;}
+    p{text-align:center;font-size:clamp(15px,2.4vw,18px);margin:0 0 18px;}
+    .buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative;min-height:90px;}
+    button{
+      border:0;border-radius:999px;padding:14px 22px;font-size:18px;font-weight:800;
+      cursor:pointer;user-select:none;touch-action:manipulation;
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease, opacity .12s ease;
+    }
+
+    /* YES always clickable */
+    #yesBtn{
+      background:linear-gradient(135deg,var(--pink),var(--pink2));
+      color:white;min-width:180px;
+      position:relative;
+      z-index:2;
+      box-shadow:0 14px 30px rgba(255,77,141,.35);
+    }
+
+    /* NO stays put, under YES */
+    #noBtn{
+      background:#fff;color:var(--ink);
+      border:1px solid rgba(42,36,56,.12);
+      min-width:180px;
+      position:relative;
+      z-index:1;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+    }
+
+    .footer{text-align:center;font-size:12px;color:rgba(42,36,56,.55);margin-top:16px;}
+    .success{display:none;text-align:center;animation:pop .25s ease-out;}
+    @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+    .confetti{position:fixed;inset:-10vh -10vw;pointer-events:none;overflow:hidden;display:none;z-index:2;}
+    .confetti i{position:absolute;width:10px;height:16px;border-radius:2px;opacity:.95;animation:fall 1.8s linear forwards;}
+    @keyframes fall{to{transform:translateY(120vh) rotate(520deg);opacity:1}}
+    .chant{position:fixed;inset:0;display:none;pointer-events:none;z-index:0;overflow:hidden;}
+    .chant span{position:absolute;font-size:20px;font-weight:900;color:rgba(255,77,141,.08);animation:floatUp 6s linear infinite;white-space:nowrap;}
+    @keyframes floatUp{from{transform:translateY(110vh);opacity:0}15%{opacity:1}to{transform:translateY(-25vh);opacity:0}}
+    .optionArea{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:18px;}
+    .resultCard{margin:18px auto 0;width:min(560px,94%);background:#fff;border:1px solid rgba(255,77,141,.18);
+      border-radius:18px;padding:16px 14px;box-shadow:0 12px 26px rgba(0,0,0,.07);text-align:left;animation:pop .25s ease-out;}
+    .qrWrap{text-align:center;display:grid;place-items:center;gap:10px;}
+    .qrBox{padding:12px;border-radius:18px;border:1px solid rgba(255,77,141,.20);background:linear-gradient(135deg,rgba(255,77,141,.10),rgba(255,121,168,.08));}
+    .tiny{font-size:12px;opacity:.65;text-align:center;margin-top:10px;}
+    .primaryBtn{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff;box-shadow:0 14px 30px rgba(255,77,141,.25);}
+  </style>
+
+  <!-- QR generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+  <div class="hearts"></div>
+  <div class="chant" id="chant"></div>
+
+  <div class="card" id="mainCard">
+    <h1>Gloria, will you be my Valentine?</h1>
+    <p>It’s me, <strong>Anthony</strong> — big question ahead 🥺💘</p>
+
+    <div class="buttons" id="btnArea">
+      <button id="yesBtn">Yes 💖</button>
+      <button id="noBtn">No 🙃</button>
+    </div>
+
+    <div class="footer">Warning: the “No” button is… dramatic.</div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <div class="audioWrapper">
+    <audio id="bgMusic" loop>
+      <source src="theme.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <div class="card success" id="success">
+    <h2>YAY — GLORIA SAID YES 😌💖</h2>
+    <p>Pick your Valentine reward:</p>
+
+    <div class="optionArea" id="optionArea"></div>
+    <div id="optionResult"></div>
+
+    <div class="buttons" style="margin-top:24px;">
+      <button id="restartBtn">Restart 🔁</button>
+    </div>
+  </div>
+
+  <script>
+    const mainCard = document.getElementById('mainCard');
+    const yesBtn   = document.getElementById('yesBtn');
+    const noBtn    = document.getElementById('noBtn');
+    const success  = document.getElementById('success');
+    const confetti = document.getElementById('confetti');
+    const chant    = document.getElementById('chant');
+    const optionArea   = document.getElementById('optionArea');
+    const optionResult = document.getElementById('optionResult');
+    const restartBtn   = document.getElementById('restartBtn');
+    const bgMusic      = document.getElementById('bgMusic');
+
+    // Music (starts after first tap)
+    let musicStarted = false;
+    function startMusic(){
+      if(musicStarted) return;
+      musicStarted = true;
+      bgMusic.volume = 0;
+
+      bgMusic.play().then(() => {
+        let v = 0;
+        const fade = setInterval(() => {
+          v += 0.05;
+          if (v >= 0.35){ bgMusic.volume = 0.35; clearInterval(fade); }
+          else { bgMusic.volume = v; }
+        }, 100);
+      }).catch(() => { musicStarted = false; });
+    }
+    document.addEventListener('click', startMusic, {passive:true});
+    document.addEventListener('touchstart', startMusic, {passive:true});
+
+    // No button drama text
+    const noTexts = [
+      "No 🙃",
+      "Are you sure? 😭",
+      "Gloriaaaa pls 🥺",
+      "Come on 💔",
+      "I told my mom 😩",
+      "Yes looks better 👀",
+      "Still nope? 😶",
+      "Fine 😔",
+      "Last chance 😤",
+      "Okay press Yes 💖"
+    ];
+
+    let noCount = 0;
+    let chantOn = false;
+
+    // Chant system
+    function startChant(){
+      chantOn = true;
+      chant.style.display = "block";
+      chant.innerHTML = "";
+      for(let i=0;i<22;i++){
+        const s = document.createElement('span');
+        s.textContent = "PRESS YES GLORIA 💖";
+        s.style.left = `${Math.random()*100}vw`;
+        s.style.animationDelay = `${Math.random()*6}s`;
+        chant.appendChild(s);
+      }
+    }
+    function stopChant(){
+      chantOn = false;
+      chant.innerHTML = "";
+      chant.style.display = "none";
+    }
+
+    // Confetti
+    function launchConfetti(cnt=120){
+      confetti.innerHTML='';
+      confetti.style.display='block';
+      const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
+      for(let i=0;i<cnt;i++){
+        const p=document.createElement('i');
+        const sz=8+Math.random()*10;
+        p.style.width=`${sz}px`;
+        p.style.height=`${sz*1.4}px`;
+        p.style.left=`${Math.random()*100}vw`;
+        p.style.top=`${-10-Math.random()*20}vh`;
+        p.style.background=cols[Math.floor(Math.random()*cols.length)];
+        p.style.transform=`rotate(${Math.random()*360}deg)`;
+        p.style.animationDuration=`${1.2+Math.random()*1.2}s`;
+        confetti.appendChild(p);
+      }
+      setTimeout(()=>{confetti.style.display='none';},2400);
+    }
+
+    // YES click
+    function celebrate(){
+      mainCard.style.display='none';
+      success.style.display='block';
+      launchConfetti();
+      stopChant();
+      showOptions();
+    }
+    yesBtn.addEventListener('click', celebrate);
+
+    // NO click (does not move around, does not cover YES)
+    noBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+
+      noCount++;
+
+      // change text
+      if(noCount < noTexts.length) noBtn.textContent = noTexts[noCount];
+      else noBtn.textContent = "Okay okay just press Yes 💖";
+
+      // grow YES a bit
+      const scale = 1 + (noCount * 0.08);
+      yesBtn.style.transform = `scale(${Math.min(scale, 1.65)})`;
+
+      // tiny wiggle in place (never leaves its spot)
+      const wiggle = 10;
+      const x = (Math.random() - 0.5) * wiggle;
+      const y = (Math.random() - 0.5) * wiggle;
+      noBtn.style.transform = `translate(${x}px, ${y}px)`;
+
+      // chant after 5 clicks
+      if(noCount >= 5 && !chantOn) startChant();
+    });
+
+    // Options
+    function showOptions(){
+      optionArea.innerHTML='';
+      optionResult.innerHTML='';
+
+      const opts=[
+        {t:"🌻 Bouquet of Sunflowers & Lilies",a:()=>{
+          optionResult.innerHTML=
+            `<div class="resultCard"><h3>Sunflowers & Lilies 🌻🤍</h3><p>A beautiful bouquet just for you, Gloria.</p></div>`;
+        }},
+        {t:"💌 A Love Letter",a:()=>{
+          optionResult.innerHTML=
+            `<div class="resultCard"><h3>💌 To Gloria</h3><p>Gloria, you light up my world… <strong>— Anthony 💖</strong></p></div>`;
+        }},
+        {t:"🎵 QR to Song",a:showQR}
+      ];
+
+      opts.sort(()=>Math.random()-0.5);
+      opts.forEach(o=>{
+        const b=document.createElement('button');
+        b.textContent=o.t;
+        b.onclick=o.a;
+        optionArea.appendChild(b);
+      });
+    }
+
+    // QR option (no song title shown)
+    function showQR(){
+      const songURL="https://open.spotify.com/track/3HxpSe02QPSIQLDqT6Foj9?si=hhz1Om2kQCSIw_KqFQKMtg";
+      optionResult.innerHTML = `
+        <div class="resultCard">
+          <h3>A little surprise for you 🎶</h3>
+          <div class="qrWrap">
+            <div class="qrBox"><div id="qrCode"></div></div>
+            <button class="primaryBtn" id="openSongBtn">Open It 💖</button>
+            <div class="tiny">Scan it like it’s a secret love mission 😌</div>
+          </div>
+        </div>
+      `;
+
+      const qrEl = document.getElementById("qrCode");
+      qrEl.innerHTML = "";
+      new QRCode(qrEl, { text: songURL, width: 200, height: 200 });
+
+      document.getElementById("openSongBtn").addEventListener("click", () => {
+        window.open(songURL, "_blank", "noopener,noreferrer");
+      });
+    }
+
+    // Restart
+    restartBtn.addEventListener('click', () => {
+      success.style.display='none';
+      mainCard.style.display='block';
+
+      noCount = 0;
+      noBtn.textContent = noTexts[0];
+      noBtn.style.transform = 'translate(0px, 0px)';
+      yesBtn.style.transform = 'scale(1)';
+      stopChant();
+
+      optionArea.innerHTML='';
+      optionResult.innerHTML='';
+    });
+  </script>
+</body>
+</html>
