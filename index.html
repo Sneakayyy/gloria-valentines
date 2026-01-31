@@ -1,0 +1,312 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gloria — Valentine’s 💘</title>
+
+<style>
+:root{
+  --bg1:#fff1f6;
+  --bg2:#ffe4ef;
+  --ink:#2a2438;
+  --pink:#ff4d8d;
+  --pink2:#ff79a8;
+  --card:#ffffffcc;
+  --shadow:0 20px 60px rgba(0,0,0,.10);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 800px at 20% 10%,var(--bg2),transparent 60%),
+    radial-gradient(900px 700px at 80% 30%,#ffd1e3,transparent 55%),
+    linear-gradient(135deg,var(--bg1),#fff);
+
+  /* SCROLL FIX */
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:40px 0;
+}
+
+.hearts{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.25;
+  z-index:0;
+}
+
+.card{
+  width:min(760px,92vw);
+  background:var(--card);
+  border:1px solid rgba(255,77,141,.25);
+  border-radius:28px;
+  box-shadow:var(--shadow);
+  padding:32px 28px;
+  backdrop-filter:blur(10px);
+  position:relative;
+  z-index:1;
+}
+
+h1{text-align:center;font-size:clamp(30px,5vw,52px);margin:8px 0;}
+p{text-align:center;font-size:clamp(15px,2.4vw,18px);margin:0 0 18px;}
+
+.buttons{
+  display:flex;
+  gap:14px;
+  justify-content:center;
+  flex-wrap:wrap;
+  min-height:90px;
+}
+
+button{
+  border:0;
+  border-radius:999px;
+  padding:14px 22px;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  touch-action:manipulation;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+
+#yesBtn{
+  background:linear-gradient(135deg,var(--pink),var(--pink2));
+  color:white;
+  position:relative;
+  z-index:2;
+  box-shadow:0 14px 30px rgba(255,77,141,.35);
+}
+
+#noBtn{
+  background:#fff;
+  border:1px solid rgba(42,36,56,.12);
+  position:relative;
+  z-index:1;
+}
+
+.footer{
+  text-align:center;
+  font-size:12px;
+  color:rgba(42,36,56,.55);
+  margin-top:16px;
+}
+
+.success{display:none;text-align:center;animation:pop .25s ease-out;}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+.confetti{
+  position:fixed;
+  inset:-10vh -10vw;
+  pointer-events:none;
+  overflow:hidden;
+  display:none;
+  z-index:2;
+}
+
+.confetti i{
+  position:absolute;
+  width:10px;
+  height:16px;
+  border-radius:2px;
+  animation:fall 1.8s linear forwards;
+}
+
+@keyframes fall{
+  to{transform:translateY(120vh) rotate(520deg);}
+}
+
+.optionArea{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  margin-top:18px;
+}
+
+.resultCard{
+  margin:18px auto 0;
+  width:min(560px,94%);
+  background:#fff;
+  border:1px solid rgba(255,77,141,.18);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 12px 26px rgba(0,0,0,.07);
+  animation:pop .25s ease-out;
+}
+
+.qrWrap{text-align:center;display:grid;place-items:center;gap:10px;}
+.qrBox{padding:12px;border-radius:18px;border:1px solid rgba(255,77,141,.20);}
+.primaryBtn{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff;}
+.tiny{font-size:12px;opacity:.65;margin-top:8px;}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+<div class="card" id="mainCard">
+  <h1>Gloria, will you be my Valentine?</h1>
+  <p>It’s me, <strong>Anthony</strong> — big question ahead 🥺💘</p>
+
+  <div class="buttons">
+    <button id="yesBtn">Yes 💖</button>
+    <button id="noBtn">No 🙃</button>
+  </div>
+
+  <div class="footer">Warning: the “No” button is… dramatic.</div>
+</div>
+
+<div class="confetti" id="confetti"></div>
+
+<audio id="bgMusic" loop>
+  <source src="theme.mp3" type="audio/mpeg">
+</audio>
+
+<div class="card success" id="success">
+  <h2>YAY — GLORIA SAID YES 😌💖</h2>
+  <p>Pick your Valentine reward:</p>
+
+  <div class="optionArea" id="optionArea"></div>
+  <div id="optionResult"></div>
+
+  <div class="buttons" style="margin-top:24px;">
+    <button id="restartBtn">Restart 🔁</button>
+  </div>
+</div>
+
+<script>
+const mainCard=document.getElementById('mainCard');
+const yesBtn=document.getElementById('yesBtn');
+const noBtn=document.getElementById('noBtn');
+const success=document.getElementById('success');
+const confetti=document.getElementById('confetti');
+const optionArea=document.getElementById('optionArea');
+const optionResult=document.getElementById('optionResult');
+const restartBtn=document.getElementById('restartBtn');
+const bgMusic=document.getElementById('bgMusic');
+
+let musicStarted=false;
+document.addEventListener('click',()=>{
+  if(!musicStarted){
+    musicStarted=true;
+    bgMusic.volume=0;
+    bgMusic.play().then(()=>{
+      let v=0;
+      const fade=setInterval(()=>{
+        v+=0.05;
+        if(v>=0.35){bgMusic.volume=0.35;clearInterval(fade);}
+        else bgMusic.volume=v;
+      },100);
+    });
+  }
+});
+
+const noTexts=["No 🙃","Are you sure? 😭","Gloriaaa pls 🥺","Come on 💔","I told my mom 😩","Yes looks better 👀","Still nope? 😶","Fine 😔","Last chance 😤"];
+let noCount=0;
+
+yesBtn.addEventListener('click',()=>{
+  mainCard.style.display='none';
+  success.style.display='block';
+  launchConfetti();
+  showOptions();
+});
+
+noBtn.addEventListener('click',(e)=>{
+  e.preventDefault();
+  noCount++;
+  if(noCount<noTexts.length) noBtn.textContent=noTexts[noCount];
+  yesBtn.style.transform=`scale(${Math.min(1+(noCount*0.08),1.65)})`;
+  noBtn.style.transform=`translate(${(Math.random()-0.5)*8}px, ${(Math.random()-0.5)*8}px)`;
+});
+
+function launchConfetti(cnt=120){
+  confetti.innerHTML='';
+  confetti.style.display='block';
+  const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
+  for(let i=0;i<cnt;i++){
+    const p=document.createElement('i');
+    const sz=8+Math.random()*10;
+    p.style.width=`${sz}px`;
+    p.style.height=`${sz*1.4}px`;
+    p.style.left=`${Math.random()*100}vw`;
+    p.style.top=`${-10-Math.random()*20}vh`;
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration=`${1.2+Math.random()*1.2}s`;
+    confetti.appendChild(p);
+  }
+  setTimeout(()=>{confetti.style.display='none';},2400);
+}
+
+function showOptions(){
+  optionArea.innerHTML='';
+  optionResult.innerHTML='';
+  const opts=[
+    {t:"🌻 Bouquet of Sunflowers & Lilies",a:()=>{optionResult.innerHTML=`<div class="resultCard"><h3>Sunflowers & Lilies 🌻🤍</h3><p>A beautiful bouquet just for you, Gloria.</p></div>`;}},
+    {t:"💌 A Love Letter",a:()=>{optionResult.innerHTML=`<div class="resultCard">
+      <h3>💌 To Gloria</h3>
+      <p>
+      Gloria,<br><br>
+      I know this website is a little dramatic (okay… very dramatic),
+      but I just wanted to do something thoughtful and fun —
+      because that’s how you make me feel.<br><br>
+      You have this effortless way of being yourself —
+      your smile, your energy, the little things you say
+      that somehow stay in my head.<br><br>
+      Being around you just feels easy. Comfortable. Good.<br><br>
+      I’m genuinely grateful to know you.
+      And if you’ll let me,
+      I’d love to keep making memories with you —
+      more laughs, more moments, more “remember when…” stories.<br><br>
+      Also… I promise snacks.
+      And at least one cute selfie together.<br><br>
+      <strong>— Anthony 💖</strong>
+      </p></div>`;}},
+    {t:"🎵 QR to Song",a:showQR}
+  ];
+  opts.sort(()=>Math.random()-0.5);
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.textContent=o.t;
+    b.onclick=o.a;
+    optionArea.appendChild(b);
+  });
+}
+
+function showQR(){
+  const songURL="https://open.spotify.com/track/3HxpSe02QPSIQLDqT6Foj9?si=hhz1Om2kQCSIw_KqFQKMtg";
+  optionResult.innerHTML=`<div class="resultCard">
+    <h3>A little surprise for you 🎶</h3>
+    <div class="qrWrap">
+      <div class="qrBox"><div id="qrCode"></div></div>
+      <button class="primaryBtn" onclick="window.open('${songURL}','_blank')">Open It 💖</button>
+      <div class="tiny">Scan it like it’s a secret love mission 😌</div>
+    </div></div>`;
+  new QRCode(document.getElementById("qrCode"),{text:songURL,width:200,height:200});
+}
+
+restartBtn.addEventListener('click',()=>{
+  success.style.display='none';
+  mainCard.style.display='block';
+  noCount=0;
+  noBtn.textContent="No 🙃";
+  noBtn.style.transform='translate(0px,0px)';
+  yesBtn.style.transform='scale(1)';
+  optionArea.innerHTML='';
+  optionResult.innerHTML='';
+});
+</script>
+
+</body>
+</html>
