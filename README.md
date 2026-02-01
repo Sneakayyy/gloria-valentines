@@ -18,6 +18,6 @@ An interactive Valentine’s Day website created by Anthony for Gloria.
 ---
 
 🌐 Live Site:  
-https://sneakayyy.github.io/gloria-valentine/
+https://sneakayyy.github.io/gloria-valentines/
 
 Built with love (and mild chaos).
