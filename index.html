@@ -36,6 +36,58 @@ body{
   padding:40px 0;
 }
 
+/* Big flashing nickname in the background */
+#bgName{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  display:grid;
+  place-items:center;
+  opacity:.10;
+  filter: blur(.2px);
+}
+#bgName span{
+  font-weight:950;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  font-size:clamp(52px,10vw,140px);
+  color:rgba(255,77,141,.45);
+  transform:rotate(-8deg);
+  animation: bgPulse 1.8s ease-in-out infinite;
+  padding:0 18px;
+  text-align:center;
+}
+@keyframes bgPulse{
+  0%,100%{transform:rotate(-8deg) scale(1); opacity:.70}
+  50%{transform:rotate(-8deg) scale(1.03); opacity:1}
+}
+
+/* Whisper layer */
+#whispers{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  overflow:hidden;
+}
+.whisper{
+  position:absolute;
+  left:50%;
+  top:55%;
+  transform:translate(-50%,-50%);
+  font-weight:900;
+  font-size:clamp(18px,3.5vw,32px);
+  color:rgba(255,77,141,.18);
+  white-space:nowrap;
+  animation: whisperFloat 2.2s ease-out forwards;
+}
+@keyframes whisperFloat{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.98)}
+  15%{opacity:1}
+  100%{opacity:0; transform:translate(-50%,-110%) scale(1.05)}
+}
+
 .card{
   width:min(760px,92vw);
   background:var(--card);
@@ -45,7 +97,7 @@ body{
   padding:32px 28px;
   backdrop-filter:blur(10px);
   position:relative;
-  z-index:1;
+  z-index:2;
 }
 
 h1{text-align:center;font-size:clamp(30px,5vw,52px);margin:8px 0;}
@@ -70,12 +122,18 @@ button{
   transition:transform .15s ease,box-shadow .15s ease, opacity .15s ease;
 }
 
+/* YES button: supports chasing via CSS vars */
 #yesBtn{
   background:linear-gradient(135deg,var(--pink),var(--pink2));
   color:white;
   position:relative;
   z-index:2;
   box-shadow:0 14px 30px rgba(255,77,141,.35);
+
+  --tx: 0px;
+  --ty: 0px;
+  --s: 1;
+  transform: translate(var(--tx), var(--ty)) scale(var(--s));
 }
 
 #noBtn{
@@ -101,7 +159,7 @@ button{
   pointer-events:none;
   overflow:hidden;
   display:none;
-  z-index:2;
+  z-index:3;
 }
 
 .confetti i{
@@ -187,7 +245,7 @@ button{
   position:fixed;
   top:-30px;
   font-size:22px;
-  z-index:2;
+  z-index:3;
   pointer-events:none;
   animation: emojiFall 1.7s linear forwards;
   opacity:.95;
@@ -250,10 +308,12 @@ button{
 </head>
 
 <body>
+<div id="bgName"><span id="bgNameText">BABE</span></div>
+<div id="whispers"></div>
 
 <div class="card" id="mainCard">
-  <h1>Gloria, will you be my Valentine?</h1>
-  <p>It’s me, <strong>Anthony</strong> — big question ahead 🥺💘</p>
+  <h1 id="titleText"></h1>
+  <p id="subText">It’s me, <strong>Anthony</strong> — big question ahead 🥺💘</p>
 
   <div class="buttons">
     <button id="yesBtn">Yes 💖</button>
@@ -270,7 +330,7 @@ button{
 </audio>
 
 <div class="card success" id="success">
-  <h2>YAY — GLORIA SAID YES 😌💖</h2>
+  <h2 id="yesHeader">YAY — GLORIA SAID YES 😌💖</h2>
   <p>Pick your Valentine reward:</p>
 
   <div class="optionArea" id="optionArea"></div>
@@ -291,6 +351,11 @@ const optionArea=document.getElementById('optionArea');
 const optionResult=document.getElementById('optionResult');
 const restartBtn=document.getElementById('restartBtn');
 const bgMusic=document.getElementById('bgMusic');
+
+const titleText=document.getElementById('titleText');
+const bgNameText=document.getElementById('bgNameText');
+const whispers=document.getElementById('whispers');
+const yesHeader=document.getElementById('yesHeader');
 
 let musicStarted=false;
 document.addEventListener('click',()=>{
@@ -321,24 +386,89 @@ const noTexts = [
 let noCount=0;
 const earned = new Set();
 
-yesBtn.addEventListener('click',()=>{
-  if (noCount === 0) {
-    unlockAchievement("hopeless","Hopeless Romantic","Pressed Yes without hesitation. Respect.","💞");
-    miniConfettiBurst(55);
-    emojiRain(10);
-  }
-  if (noCount === 1) {
-    unlockAchievement("tsundere","Tsundere","Clicked No once… then folded immediately.","😤💖");
-    miniConfettiBurst(45);
-    emojiRain(8);
+/* ========= RANDOM NICKNAMES ========= */
+const nicknamePool = [
+  "Gloria","Babe","Baby","Boo Boo","My Love","Cutie","Sunshine","Pretty Girl",
+  "Sweetheart","My Favorite Human","Future Valentine","Heart Stealer","Miss Gorgeous"
+];
+
+const chaosNicknamePool = [
+  "Miss Clicks No","Professional Heartbreaker","Why Are You Like This","Stop Playing",
+  "My Stubborn Queen","Drama Queen","Future Yes Clicker","CEO of No","Captain Chaos"
+];
+
+let currentName = "Gloria";
+
+function rerollNickname(){
+  const pool = (noCount >= 5) ? chaosNicknamePool : nicknamePool;
+  let next = pool[Math.floor(Math.random() * pool.length)];
+
+  // Avoid repeating the same nickname back-to-back
+  if (next === currentName && pool.length > 1) {
+    next = pool[(pool.indexOf(next) + 1) % pool.length];
   }
 
-  mainCard.style.display='none';
-  success.style.display='block';
-  launchConfetti();
-  showOptions();
-});
+  currentName = next;
 
+  titleText.textContent = `${currentName}, will you be my Valentine?`;
+  bgNameText.textContent = currentName;
+  yesHeader.textContent = `YAY — ${String(currentName).toUpperCase()} SAID YES 😌💖`;
+}
+
+function whisper(msg){
+  const s = document.createElement("div");
+  s.className = "whisper";
+  s.textContent = msg;
+  s.style.left = `${35 + Math.random()*30}%`;
+  s.style.top  = `${45 + Math.random()*20}%`;
+  whispers.appendChild(s);
+  setTimeout(()=>s.remove(), 2300);
+}
+
+/* ========= YES CHASE (DESKTOP ONLY) ========= */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+function setYesScale(s){
+  yesBtn.style.setProperty("--s", String(s));
+}
+function setYesTranslate(x,y){
+  yesBtn.style.setProperty("--tx", `${x}px`);
+  yesBtn.style.setProperty("--ty", `${y}px`);
+}
+function resetYesMotion(){
+  setYesTranslate(0,0);
+  setYesScale(1);
+  yesBtn.style.boxShadow="0 14px 30px rgba(255,77,141,.35)";
+  yesBtn.textContent = "Yes 💖";
+}
+
+if(!isMobile){
+  document.addEventListener("mousemove",(e)=>{
+    // Only chase while on the main screen
+    if (mainCard.style.display === "none") return;
+
+    const rect = yesBtn.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.hypot(dx,dy);
+
+    // If cursor gets close, nudge toward it
+    const radius = 180;
+    if(dist < radius){
+      const strength = (radius - dist) / radius; // 0..1
+      const nx = (dx / (dist || 1)) * (14 * strength);
+      const ny = (dy / (dist || 1)) * (10 * strength);
+      setYesTranslate(nx, ny);
+    } else {
+      setYesTranslate(0,0);
+    }
+  });
+}
+
+/* ========= CHAOS HELPERS ========= */
 function showToast(msg){
   let t = document.getElementById("toast");
   if(!t){
@@ -353,7 +483,7 @@ function showToast(msg){
 }
 
 function emojiRain(count=14){
-  const em = ["💖","💘","💗","✨","🌟","😭","😤","🌻","🫶","💞"];
+  const em = ["💖","💘","💗","✨","🌟","😭","😤","🌻","🫶","💞","🥺"];
   for(let i=0;i<count;i++){
     const e = document.createElement("div");
     e.className = "emoji";
@@ -386,11 +516,15 @@ function miniConfettiBurst(cnt=35){
 
 function glitchYes(){
   yesBtn.style.boxShadow = "0 0 38px rgba(255,77,141,.85)";
-  yesBtn.style.transform = `scale(${Math.min(1.15 + noCount*0.06, 1.95)})`;
-  const labels = ["Yes 💖","YES 💖","YESSS 💖","PRESS ME 💖"];
-  yesBtn.textContent = labels[Math.min(labels.length-1, Math.floor(noCount/4))];
+  const s = Math.min(1.10 + noCount*0.06, 1.90);
+  setYesScale(s);
+
+  const labels = ["Yes","YES","YESSS","PRESS ME"];
+  const label = labels[Math.min(labels.length-1, Math.floor(noCount/4))];
+  yesBtn.textContent = `${label}, ${currentName} 💖`;
 }
 
+/* ========= ACHIEVEMENTS ========= */
 function unlockAchievement(key, title, subtitle, emoji){
   if (earned.has(key)) return;
   earned.add(key);
@@ -423,28 +557,72 @@ function checkAchievements(){
   if (noCount === 17) unlockAchievement("legend","Legendary Resistance","Seventeen No’s… okay you’re powerful.","🌟");
 }
 
+/* ========= MAIN FLOW ========= */
+function celebrate(){
+  mainCard.style.display='none';
+  success.style.display='block';
+  launchConfetti();
+  showOptions();
+}
+
+yesBtn.addEventListener('click',()=>{
+  // secret achievements based on how fast she folds 😭
+  if (noCount === 0) {
+    unlockAchievement("hopeless","Hopeless Romantic","Pressed Yes without hesitation. Respect.","💞");
+    miniConfettiBurst(55);
+    emojiRain(10);
+  }
+  if (noCount === 1) {
+    unlockAchievement("tsundere","Tsundere","Clicked No once… then folded immediately.","😤💖");
+    miniConfettiBurst(45);
+    emojiRain(8);
+  }
+  if (noCount === 2) {
+    unlockAchievement("notlike","It’s Not Like I Like You…","Two No’s then Yes. Suspicious.","😳");
+    miniConfettiBurst(40);
+    emojiRain(7);
+  }
+
+  celebrate();
+});
+
 noBtn.addEventListener('click',(e)=>{
   e.preventDefault();
   noCount++;
 
+  // full chaos: reroll nickname every time she clicks No
+  rerollNickname();
+
+  // whisper chaos
+  const whisperLinesA = ["baby…", "babe…", "boo boo…", "pls…", "be fr…", "don’t do this… 😭"];
+  const whisperLinesB = ["okay that’s enough.", "stop playing.", "press yes.", "this is your sign.", "i made a website!!"];
+  whisper((noCount >= 5 ? whisperLinesB : whisperLinesA)[Math.floor(Math.random() * (noCount >= 5 ? whisperLinesB.length : whisperLinesA.length))]);
+
   checkAchievements();
 
+  // Update No text
   noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
+
+  // YES becomes destiny
   glitchYes();
 
+  // No button shrinks + jitters
   const shrink = Math.max(0.58, 1 - noCount*0.03);
   noBtn.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px) scale(${shrink})`;
 
+  // Shake + sometimes flip
   noBtn.classList.remove("shake","flip");
   void noBtn.offsetWidth;
   noBtn.classList.add("shake");
   if (noCount % 3 === 0) noBtn.classList.add("flip");
 
+  // Screen wiggle (subtle)
   document.body.classList.remove("wiggle");
   void document.body.offsetWidth;
   document.body.classList.add("wiggle");
   setTimeout(()=>document.body.classList.remove("wiggle"), 220);
 
+  // Random chaos events
   if (noCount === 4) showToast("📩 Mom: “She better say yes.”");
   if (noCount === 6) { emojiRain(18); miniConfettiBurst(45); }
   if (noCount === 8) showToast("⚠️ Warning: Excessive ‘No’ detected");
@@ -454,9 +632,10 @@ noBtn.addEventListener('click',(e)=>{
     const oldYes = yesBtn.textContent;
     noBtn.textContent = "Yes 💖 (nice try)";
     yesBtn.textContent = "No 🙃 (absolutely not)";
-    setTimeout(()=>{ noBtn.textContent = oldNo; yesBtn.textContent = oldYes; }, 900);
+    setTimeout(()=>{ noBtn.textContent = oldNo; glitchYes(); }, 900);
   }
 
+  // 15th click: disable No for 2 seconds + fake loading bar
   if (noCount === 15) {
     noBtn.disabled = true;
     showToast("No is taking a break 😌");
@@ -474,7 +653,9 @@ noBtn.addEventListener('click',(e)=>{
     }, 2000);
   }
 
+  // Auto-YES ending + hidden achievement
   if (noCount >= 18) {
+    unlockAchievement("youwin","You Win.","Okay fine. I love you.","🥹");
     showToast("Auto-selecting YES for your safety 💖");
     setTimeout(()=>yesBtn.click(), 700);
   }
@@ -504,9 +685,9 @@ function showOptions(){
   const opts=[
     { t:"🌻 Bouquet of Sunflowers & Lilies", a:showBouquet },
     { t:"💌 A Love Letter", a:()=>{ optionResult.innerHTML=`<div class="resultCard">
-      <h3>💌 To Gloria</h3>
+      <h3>💌 To ${currentName}</h3>
       <p>
-      Gloria,<br><br>
+      ${currentName},<br><br>
       I know this website is a little dramatic (okay… very dramatic),
       but I just wanted to do something thoughtful and fun —
       because that’s how you make me feel.<br><br>
@@ -538,7 +719,7 @@ function showBouquet(){
   optionResult.innerHTML = `
     <div class="resultCard" style="text-align:center;">
       <h3>Sunflowers & Lilies 🌻🤍</h3>
-      <img class="bouquet-img" src="bouquet.PNG" alt="Hand drawn bouquet"
+      <img class="bouquet-img" src="bouquet.PNG" alt="Bouquet"
         style="width:100%;max-width:520px;border-radius:20px;margin:18px auto 8px;display:block;box-shadow:0 20px 40px rgba(0,0,0,.18);">
     </div>
   `;
@@ -567,13 +748,22 @@ restartBtn.addEventListener('click',()=>{
   noBtn.style.transform='translate(0px,0px) scale(1)';
   noBtn.disabled=false;
 
-  yesBtn.textContent="Yes 💖";
-  yesBtn.style.transform='scale(1)';
-  yesBtn.style.boxShadow="0 14px 30px rgba(255,77,141,.35)";
+  resetYesMotion();
 
   optionArea.innerHTML='';
   optionResult.innerHTML='';
+
+  // reset nickname + visuals
+  rerollNickname();
 });
+
+(function init(){
+  // set initial nickname
+  rerollNickname();
+
+  // and a tiny welcome whisper
+  setTimeout(()=>whisper("hi baby… 💖"), 600);
+})();
 </script>
 
 </body>
