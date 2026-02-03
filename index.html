@@ -58,9 +58,29 @@ body{
   padding:0 18px;
   text-align:center;
 }
+
+/* Pulse */
 @keyframes bgPulse{
   0%,100%{transform:rotate(-8deg) scale(1); opacity:.70}
   50%{transform:rotate(-8deg) scale(1.03); opacity:1}
+}
+
+/* Shake on demand */
+@keyframes bgJitter{
+  0%{transform:rotate(-8deg) translate(0,0) scale(1.03)}
+  20%{transform:rotate(-8deg) translate(-2px,1px) scale(1.03)}
+  40%{transform:rotate(-8deg) translate(2px,-1px) scale(1.03)}
+  60%{transform:rotate(-8deg) translate(-2px,-1px) scale(1.03)}
+  80%{transform:rotate(-8deg) translate(2px,1px) scale(1.03)}
+  100%{transform:rotate(-8deg) translate(0,0) scale(1.03)}
+}
+
+/* Combine pulse + one-shot jitter without killing pulse */
+#bgName span.jitter{
+  animation-name: bgPulse, bgJitter;
+  animation-duration: 1.8s, .38s;
+  animation-timing-function: ease-in-out, linear;
+  animation-iteration-count: infinite, 1;
 }
 
 /* Whisper layer */
@@ -122,7 +142,6 @@ button{
   transition:transform .15s ease,box-shadow .15s ease, opacity .15s ease;
 }
 
-/* YES button: supports chasing via CSS vars */
 #yesBtn{
   background:linear-gradient(135deg,var(--pink),var(--pink2));
   color:white;
@@ -283,7 +302,7 @@ button{
   z-index:1000;
   opacity:0;
   transform:translateY(-10px) scale(.98);
-  transition:opacity .18s ease, transform .18s ease;
+  transition:opacity .25s ease, transform .25s ease;
   pointer-events:none;
 }
 .achievement.show{ opacity:1; transform:translateY(0) scale(1); }
@@ -295,7 +314,7 @@ button{
   align-items:center;
   gap:8px;
 }
-.ach-sub{ font-size:12px; opacity:.75; margin-top:4px; }
+.ach-sub{ font-size:12px; opacity:.80; margin-top:4px; }
 .badge{
   width:28px;height:28px;border-radius:10px;
   display:grid;place-items:center;
@@ -399,15 +418,18 @@ const chaosNicknamePool = [
 
 let currentName = "Gloria";
 
+function jitterBackgroundName(){
+  bgNameText.classList.remove("jitter");
+  void bgNameText.offsetWidth;
+  bgNameText.classList.add("jitter");
+}
+
 function rerollNickname(){
   const pool = (noCount >= 5) ? chaosNicknamePool : nicknamePool;
   let next = pool[Math.floor(Math.random() * pool.length)];
-
-  // Avoid repeating the same nickname back-to-back
   if (next === currentName && pool.length > 1) {
     next = pool[(pool.indexOf(next) + 1) % pool.length];
   }
-
   currentName = next;
 
   titleText.textContent = `${currentName}, will you be my Valentine?`;
@@ -428,9 +450,7 @@ function whisper(msg){
 /* ========= YES CHASE (DESKTOP ONLY) ========= */
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-function setYesScale(s){
-  yesBtn.style.setProperty("--s", String(s));
-}
+function setYesScale(s){ yesBtn.style.setProperty("--s", String(s)); }
 function setYesTranslate(x,y){
   yesBtn.style.setProperty("--tx", `${x}px`);
   yesBtn.style.setProperty("--ty", `${y}px`);
@@ -444,7 +464,6 @@ function resetYesMotion(){
 
 if(!isMobile){
   document.addEventListener("mousemove",(e)=>{
-    // Only chase while on the main screen
     if (mainCard.style.display === "none") return;
 
     const rect = yesBtn.getBoundingClientRect();
@@ -455,10 +474,9 @@ if(!isMobile){
     const dy = e.clientY - cy;
     const dist = Math.hypot(dx,dy);
 
-    // If cursor gets close, nudge toward it
     const radius = 180;
     if(dist < radius){
-      const strength = (radius - dist) / radius; // 0..1
+      const strength = (radius - dist) / radius;
       const nx = (dx / (dist || 1)) * (14 * strength);
       const ny = (dy / (dist || 1)) * (10 * strength);
       setYesTranslate(nx, ny);
@@ -479,7 +497,7 @@ function showToast(msg){
   }
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1200);
+  setTimeout(()=>t.classList.remove("show"), 1400);
 }
 
 function emojiRain(count=14){
@@ -546,7 +564,7 @@ function unlockAchievement(key, title, subtitle, emoji){
   `;
 
   a.classList.add("show");
-  setTimeout(()=>a.classList.remove("show"), 1800);
+  setTimeout(()=>a.classList.remove("show"), 3200); /* slowed down */
 }
 
 function checkAchievements(){
@@ -555,6 +573,73 @@ function checkAchievements(){
   if (noCount === 10) unlockAchievement("villain","Romantic Villain Arc","Ten No’s unlocked your villain era.","😈");
   if (noCount === 13) unlockAchievement("speedrun","No% Speedrun","You’re speedrunning heartbreak.","⏱️");
   if (noCount === 17) unlockAchievement("legend","Legendary Resistance","Seventeen No’s… okay you’re powerful.","🌟");
+}
+
+/* ========= RANDOM APOLOGY TYPING ========= */
+let apologyTypingStarted = false;
+let typingInterval = null;
+let lastApologyAt = 0;  // cooldown tracking
+
+function typeOnNoButton(message, speed=38){
+  if (typingInterval) clearInterval(typingInterval);
+  let i = 0;
+  noBtn.textContent = "";
+  typingInterval = setInterval(()=>{
+    i++;
+    noBtn.textContent = message.slice(0,i);
+    if(i >= message.length){
+      clearInterval(typingInterval);
+      typingInterval = null;
+    }
+  }, speed);
+}
+
+function startApologySequence(){
+  if (apologyTypingStarted) return;
+  apologyTypingStarted = true;
+
+  const lines = [
+    "ok wait… 😔",
+    "i'm sorry baby…",
+    "i didn't mean it…",
+    "press yes pls 💖"
+  ];
+
+  showToast("No is having regrets…");
+  noBtn.disabled = true;
+
+  let step = 0;
+  const runLine = ()=>{
+    if(step >= lines.length){
+      noBtn.disabled = false;
+      noBtn.textContent = "No 🙃";
+      apologyTypingStarted = false; // allow future random apologies
+      lastApologyAt = noCount;      // start cooldown
+      return;
+    }
+    typeOnNoButton(lines[step], 36);
+    step++;
+    setTimeout(runLine, 950);
+  };
+
+  runLine();
+}
+
+function maybeTriggerRandomApology(){
+  // Don’t interrupt if already typing
+  if (apologyTypingStarted || typingInterval) return;
+
+  // Cooldown: wait at least 4 "No" clicks between apology sequences
+  if (noCount - lastApologyAt < 4) return;
+
+  // Probability ramps up as noCount increases:
+  // starts after 6 No’s, then increases gradually
+  if (noCount < 6) return;
+
+  const chance = Math.min(0.12 + (noCount - 6) * 0.045, 0.70); // up to 70%
+  if (Math.random() < chance) {
+    startApologySequence();
+  }
 }
 
 /* ========= MAIN FLOW ========= */
@@ -566,7 +651,6 @@ function celebrate(){
 }
 
 yesBtn.addEventListener('click',()=>{
-  // secret achievements based on how fast she folds 😭
   if (noCount === 0) {
     unlockAchievement("hopeless","Hopeless Romantic","Pressed Yes without hesitation. Respect.","💞");
     miniConfettiBurst(55);
@@ -590,52 +674,48 @@ noBtn.addEventListener('click',(e)=>{
   e.preventDefault();
   noCount++;
 
-  // full chaos: reroll nickname every time she clicks No
+  jitterBackgroundName();
   rerollNickname();
 
-  // whisper chaos
   const whisperLinesA = ["baby…", "babe…", "boo boo…", "pls…", "be fr…", "don’t do this… 😭"];
   const whisperLinesB = ["okay that’s enough.", "stop playing.", "press yes.", "this is your sign.", "i made a website!!"];
   whisper((noCount >= 5 ? whisperLinesB : whisperLinesA)[Math.floor(Math.random() * (noCount >= 5 ? whisperLinesB.length : whisperLinesA.length))]);
 
   checkAchievements();
 
-  // Update No text
-  noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
+  /* ✅ RANDOM apology typing (with cooldown + ramping chance) */
+  maybeTriggerRandomApology();
 
-  // YES becomes destiny
+  /* Update No text (only if not mid-typing) */
+  if (!typingInterval && !apologyTypingStarted) {
+    noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
+  }
+
   glitchYes();
 
-  // No button shrinks + jitters
   const shrink = Math.max(0.58, 1 - noCount*0.03);
   noBtn.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px) scale(${shrink})`;
 
-  // Shake + sometimes flip
   noBtn.classList.remove("shake","flip");
   void noBtn.offsetWidth;
   noBtn.classList.add("shake");
   if (noCount % 3 === 0) noBtn.classList.add("flip");
 
-  // Screen wiggle (subtle)
   document.body.classList.remove("wiggle");
   void document.body.offsetWidth;
   document.body.classList.add("wiggle");
   setTimeout(()=>document.body.classList.remove("wiggle"), 220);
 
-  // Random chaos events
   if (noCount === 4) showToast("📩 Mom: “She better say yes.”");
   if (noCount === 6) { emojiRain(18); miniConfettiBurst(45); }
   if (noCount === 8) showToast("⚠️ Warning: Excessive ‘No’ detected");
   if (noCount === 10) showToast("System override loading…");
   if (noCount === 12) {
     const oldNo = noBtn.textContent;
-    const oldYes = yesBtn.textContent;
     noBtn.textContent = "Yes 💖 (nice try)";
-    yesBtn.textContent = "No 🙃 (absolutely not)";
-    setTimeout(()=>{ noBtn.textContent = oldNo; glitchYes(); }, 900);
+    setTimeout(()=>{ if(!typingInterval && !apologyTypingStarted) noBtn.textContent = oldNo; glitchYes(); }, 900);
   }
 
-  // 15th click: disable No for 2 seconds + fake loading bar
   if (noCount === 15) {
     noBtn.disabled = true;
     showToast("No is taking a break 😌");
@@ -653,7 +733,6 @@ noBtn.addEventListener('click',(e)=>{
     }, 2000);
   }
 
-  // Auto-YES ending + hidden achievement
   if (noCount >= 18) {
     unlockAchievement("youwin","You Win.","Okay fine. I love you.","🥹");
     showToast("Auto-selecting YES for your safety 💖");
@@ -744,6 +823,10 @@ restartBtn.addEventListener('click',()=>{
   noCount=0;
   earned.clear();
 
+  apologyTypingStarted = false;
+  if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
+  lastApologyAt = 0;
+
   noBtn.textContent="No 🙃";
   noBtn.style.transform='translate(0px,0px) scale(1)';
   noBtn.disabled=false;
@@ -753,15 +836,11 @@ restartBtn.addEventListener('click',()=>{
   optionArea.innerHTML='';
   optionResult.innerHTML='';
 
-  // reset nickname + visuals
   rerollNickname();
 });
 
 (function init(){
-  // set initial nickname
   rerollNickname();
-
-  // and a tiny welcome whisper
   setTimeout(()=>whisper("hi baby… 💖"), 600);
 })();
 </script>
