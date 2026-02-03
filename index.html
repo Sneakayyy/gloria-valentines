@@ -148,6 +148,15 @@ button{
 .qrBox{padding:12px;border-radius:18px;border:1px solid rgba(255,77,141,.20);}
 .primaryBtn{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff;}
 .tiny{font-size:12px;opacity:.65;margin-top:8px;}
+
+/* Bouquet image open animation */
+@keyframes fadeInImage{
+  from{opacity:0; transform: translateY(8px) scale(.98);}
+  to{opacity:1; transform: translateY(0) scale(1);}
+}
+.bouquet-img{
+  animation: fadeInImage .35s ease-out;
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -252,7 +261,10 @@ function showOptions(){
   optionArea.innerHTML='';
   optionResult.innerHTML='';
   const opts=[
-    {t:"🌻 Bouquet of Sunflowers & Lilies",a:()=>{optionResult.innerHTML=`<div class="resultCard"><h3>Sunflowers & Lilies 🌻🤍</h3><p>A beautiful bouquet just for you, Gloria.</p></div>`;}},
+    {
+      t:"🌻 Bouquet of Sunflowers & Lilies",
+      a:showBouquet
+    },
     {t:"💌 A Love Letter",a:()=>{optionResult.innerHTML=`<div class="resultCard">
       <h3>💌 To Gloria</h3>
       <p>
@@ -281,6 +293,36 @@ function showOptions(){
     b.onclick=o.a;
     optionArea.appendChild(b);
   });
+}
+
+/* ✅ Bouquet option opens image (uses bouquet.PNG exactly) */
+function showBouquet(){
+  optionResult.innerHTML = `
+    <div class="resultCard" style="text-align:center;">
+      <h3>Sunflowers & Lilies 🌻🤍</h3>
+
+      <img
+        class="bouquet-img"
+        src="bouquet.PNG"
+        alt="Hand drawn bouquet of sunflowers and lilies"
+        style="
+          width:100%;
+          max-width:520px;
+          border-radius:20px;
+          margin:18px auto 8px;
+          display:block;
+          box-shadow:0 20px 40px rgba(0,0,0,.18);
+        "
+      >
+
+      <p style="margin-top:10px;">
+        Hand-drawn just for you, Gloria 💖<br>
+        (Yes, I’m trying to be cute. It’s working.)
+        <br><br>
+        — Anthony
+      </p>
+    </div>
+  `;
 }
 
 function showQR(){
