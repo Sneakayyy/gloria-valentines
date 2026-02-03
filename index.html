@@ -407,7 +407,8 @@ const earned = new Set();
 
 /* ========= RANDOM NICKNAMES ========= */
 const nicknamePool = [
-  "Gloria","Babe","Baby","Boo Boo","My Love","Cutie","Sunshine","Pretty Girl",
+  "Gloria","Babe","Baby","Boo Boo","Mi Amor",
+  "My Love","Cutie","Sunshine","Pretty Girl",
   "Sweetheart","My Favorite Human","Future Valentine","Heart Stealer","Miss Gorgeous"
 ];
 
@@ -417,6 +418,15 @@ const chaosNicknamePool = [
 ];
 
 let currentName = "Gloria";
+
+/* Apology nicknames */
+const apologyNames = ["Babe","Baby","Boo Boo","Mi Amor"];
+
+/* ========= EASTER EGGS STATE ========= */
+let ultraChaos=false;
+let stealthMode=false;
+let tripleTapCount=0;
+let tripleTapTimer=null;
 
 function jitterBackgroundName(){
   bgNameText.classList.remove("jitter");
@@ -438,6 +448,9 @@ function rerollNickname(){
 }
 
 function whisper(msg){
+  // Stealth mode makes whispers sweeter / calmer
+  if(stealthMode) msg = msg.replace(/😭|😤|💀/g, "💖");
+
   const s = document.createElement("div");
   s.className = "whisper";
   s.textContent = msg;
@@ -564,7 +577,7 @@ function unlockAchievement(key, title, subtitle, emoji){
   `;
 
   a.classList.add("show");
-  setTimeout(()=>a.classList.remove("show"), 3200); /* slowed down */
+  setTimeout(()=>a.classList.remove("show"), 3200);
 }
 
 function checkAchievements(){
@@ -575,10 +588,15 @@ function checkAchievements(){
   if (noCount === 17) unlockAchievement("legend","Legendary Resistance","Seventeen No’s… okay you’re powerful.","🌟");
 }
 
-/* ========= RANDOM APOLOGY TYPING ========= */
+/* ========= RANDOM APOLOGY TYPING (with random nickname) ========= */
 let apologyTypingStarted = false;
 let typingInterval = null;
-let lastApologyAt = 0;  // cooldown tracking
+let lastApologyAt = 0;
+
+function pickApologyName(){
+  const pool = [...apologyNames, currentName, "Babe", "Baby"];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 function typeOnNoButton(message, speed=38){
   if (typingInterval) clearInterval(typingInterval);
@@ -598,11 +616,13 @@ function startApologySequence(){
   if (apologyTypingStarted) return;
   apologyTypingStarted = true;
 
+  const n = pickApologyName();
+
   const lines = [
     "ok wait… 😔",
-    "i'm sorry baby…",
+    `i'm sorry ${n}…`,
     "i didn't mean it…",
-    "press yes pls 💖"
+    `press yes pls ${n} 💖`
   ];
 
   showToast("No is having regrets…");
@@ -613,8 +633,8 @@ function startApologySequence(){
     if(step >= lines.length){
       noBtn.disabled = false;
       noBtn.textContent = "No 🙃";
-      apologyTypingStarted = false; // allow future random apologies
-      lastApologyAt = noCount;      // start cooldown
+      apologyTypingStarted = false;
+      lastApologyAt = noCount;
       return;
     }
     typeOnNoButton(lines[step], 36);
@@ -626,20 +646,87 @@ function startApologySequence(){
 }
 
 function maybeTriggerRandomApology(){
-  // Don’t interrupt if already typing
   if (apologyTypingStarted || typingInterval) return;
-
-  // Cooldown: wait at least 4 "No" clicks between apology sequences
   if (noCount - lastApologyAt < 4) return;
-
-  // Probability ramps up as noCount increases:
-  // starts after 6 No’s, then increases gradually
   if (noCount < 6) return;
 
-  const chance = Math.min(0.12 + (noCount - 6) * 0.045, 0.70); // up to 70%
-  if (Math.random() < chance) {
-    startApologySequence();
+  const chance = Math.min(0.12 + (noCount - 6) * 0.045, 0.70);
+  if (Math.random() < chance) startApologySequence();
+}
+
+/* ========= OPTIONS ========= */
+function showBouquet(){
+  optionResult.innerHTML = `
+    <div class="resultCard" style="text-align:center;">
+      <h3>Sunflowers & Lilies 🌻🤍</h3>
+      <img class="bouquet-img" src="bouquet.PNG" alt="Bouquet"
+        style="width:100%;max-width:520px;border-radius:20px;margin:18px auto 8px;display:block;box-shadow:0 20px 40px rgba(0,0,0,.18);">
+    </div>
+  `;
+}
+function showQR(){
+  const songURL="https://open.spotify.com/track/3HxpSe02QPSIQLDqT6Foj9?si=hhz1Om2kQCSIw_KqFQKMtg";
+  optionResult.innerHTML=`<div class="resultCard">
+    <h3>A little surprise for you 🎶</h3>
+    <div class="qrWrap">
+      <div class="qrBox"><div id="qrCode"></div></div>
+      <button class="primaryBtn" onclick="window.open('${songURL}','_blank')">Open It 💖</button>
+      <div class="tiny">Scan it like it’s a secret love mission 😌</div>
+    </div></div>`;
+  new QRCode(document.getElementById("qrCode"),{text:songURL,width:200,height:200});
+}
+function showOptions(){
+  optionArea.innerHTML='';
+  optionResult.innerHTML='';
+  const opts=[
+    { t:"🌻 Bouquet of Sunflowers & Lilies", a:showBouquet },
+    { t:"💌 A Love Letter", a:()=>{ optionResult.innerHTML=`<div class="resultCard">
+      <h3>💌 To ${currentName}</h3>
+      <p>
+      ${currentName},<br><br>
+      I know this website is a little dramatic (okay… very dramatic),
+      but I just wanted to do something thoughtful and fun —
+      because that’s how you make me feel.<br><br>
+      You have this effortless way of being yourself —
+      your smile, your energy, the little things you say
+      that somehow stay in my head.<br><br>
+      Being around you just feels easy. Comfortable. Good.<br><br>
+      I’m genuinely grateful to know you.
+      And if you’ll let me,
+      I’d love to keep making memories with you —
+      more laughs, more moments, more “remember when…” stories.<br><br>
+      Also… I promise snacks.
+      And at least one cute selfie together.<br><br>
+      <strong>— Anthony 💖</strong>
+      </p></div>`; } },
+    { t:"🎵 QR to Song", a:showQR }
+  ];
+  opts.sort(()=>Math.random()-0.5);
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.textContent=o.t;
+    b.onclick=o.a;
+    optionArea.appendChild(b);
+  });
+}
+
+/* ========= CONFETTI ========= */
+function launchConfetti(cnt=120){
+  confetti.innerHTML='';
+  confetti.style.display='block';
+  const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
+  for(let i=0;i<cnt;i++){
+    const p=document.createElement('i');
+    const sz=8+Math.random()*10;
+    p.style.width=`${sz}px`;
+    p.style.height=`${sz*1.4}px`;
+    p.style.left=`${Math.random()*100}vw`;
+    p.style.top=`${-10-Math.random()*20}vh`;
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration=`${1.2+Math.random()*1.2}s`;
+    confetti.appendChild(p);
   }
+  setTimeout(()=>{confetti.style.display='none';},2400);
 }
 
 /* ========= MAIN FLOW ========= */
@@ -666,7 +753,6 @@ yesBtn.addEventListener('click',()=>{
     miniConfettiBurst(40);
     emojiRain(7);
   }
-
   celebrate();
 });
 
@@ -677,24 +763,23 @@ noBtn.addEventListener('click',(e)=>{
   jitterBackgroundName();
   rerollNickname();
 
-  const whisperLinesA = ["baby…", "babe…", "boo boo…", "pls…", "be fr…", "don’t do this… 😭"];
+  const whisperLinesA = ["baby…", "babe…", "boo boo…", "mi amor…", "pls…", "be fr…", "don’t do this… 😭"];
   const whisperLinesB = ["okay that’s enough.", "stop playing.", "press yes.", "this is your sign.", "i made a website!!"];
   whisper((noCount >= 5 ? whisperLinesB : whisperLinesA)[Math.floor(Math.random() * (noCount >= 5 ? whisperLinesB.length : whisperLinesA.length))]);
 
   checkAchievements();
-
-  /* ✅ RANDOM apology typing (with cooldown + ramping chance) */
   maybeTriggerRandomApology();
 
-  /* Update No text (only if not mid-typing) */
   if (!typingInterval && !apologyTypingStarted) {
     noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
   }
 
   glitchYes();
 
-  const shrink = Math.max(0.58, 1 - noCount*0.03);
-  noBtn.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px) scale(${shrink})`;
+  // Stealth mode: slightly less violent movement
+  const shrink = Math.max(0.62, 1 - noCount*(stealthMode ? 0.02 : 0.03));
+  const wig = stealthMode ? 6 : 10;
+  noBtn.style.transform = `translate(${(Math.random()-0.5)*wig}px, ${(Math.random()-0.5)*wig}px) scale(${shrink})`;
 
   noBtn.classList.remove("shake","flip");
   void noBtn.offsetWidth;
@@ -740,82 +825,133 @@ noBtn.addEventListener('click',(e)=>{
   }
 });
 
-function launchConfetti(cnt=120){
-  confetti.innerHTML='';
-  confetti.style.display='block';
-  const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
-  for(let i=0;i<cnt;i++){
-    const p=document.createElement('i');
-    const sz=8+Math.random()*10;
-    p.style.width=`${sz}px`;
-    p.style.height=`${sz*1.4}px`;
-    p.style.left=`${Math.random()*100}vw`;
-    p.style.top=`${-10-Math.random()*20}vh`;
-    p.style.background=cols[Math.floor(Math.random()*cols.length)];
-    p.style.animationDuration=`${1.2+Math.random()*1.2}s`;
-    confetti.appendChild(p);
-  }
-  setTimeout(()=>{confetti.style.display='none';},2400);
-}
+/* ========= EASTER EGGS (ALL) ========= */
 
-function showOptions(){
-  optionArea.innerHTML='';
-  optionResult.innerHTML='';
-  const opts=[
-    { t:"🌻 Bouquet of Sunflowers & Lilies", a:showBouquet },
-    { t:"💌 A Love Letter", a:()=>{ optionResult.innerHTML=`<div class="resultCard">
-      <h3>💌 To ${currentName}</h3>
-      <p>
-      ${currentName},<br><br>
-      I know this website is a little dramatic (okay… very dramatic),
-      but I just wanted to do something thoughtful and fun —
-      because that’s how you make me feel.<br><br>
-      You have this effortless way of being yourself —
-      your smile, your energy, the little things you say
-      that somehow stay in my head.<br><br>
-      Being around you just feels easy. Comfortable. Good.<br><br>
-      I’m genuinely grateful to know you.
-      And if you’ll let me,
-      I’d love to keep making memories with you —
-      more laughs, more moments, more “remember when…” stories.<br><br>
-      Also… I promise snacks.
-      And at least one cute selfie together.<br><br>
-      <strong>— Anthony 💖</strong>
-      </p></div>`; } },
-    { t:"🎵 QR to Song", a:showQR }
-  ];
-
-  opts.sort(()=>Math.random()-0.5);
-  opts.forEach(o=>{
-    const b=document.createElement('button');
-    b.textContent=o.t;
-    b.onclick=o.a;
-    optionArea.appendChild(b);
-  });
-}
-
-function showBouquet(){
+/* Little modal-ish message uses your existing resultCard area */
+function bigMessage(title, body){
   optionResult.innerHTML = `
     <div class="resultCard" style="text-align:center;">
-      <h3>Sunflowers & Lilies 🌻🤍</h3>
-      <img class="bouquet-img" src="bouquet.PNG" alt="Bouquet"
-        style="width:100%;max-width:520px;border-radius:20px;margin:18px auto 8px;display:block;box-shadow:0 20px 40px rgba(0,0,0,.18);">
+      <h3>${title}</h3>
+      <p>${body}</p>
     </div>
   `;
 }
 
-function showQR(){
-  const songURL="https://open.spotify.com/track/3HxpSe02QPSIQLDqT6Foj9?si=hhz1Om2kQCSIw_KqFQKMtg";
-  optionResult.innerHTML=`<div class="resultCard">
-    <h3>A little surprise for you 🎶</h3>
-    <div class="qrWrap">
-      <div class="qrBox"><div id="qrCode"></div></div>
-      <button class="primaryBtn" onclick="window.open('${songURL}','_blank')">Open It 💖</button>
-      <div class="tiny">Scan it like it’s a secret love mission 😌</div>
-    </div></div>`;
-  new QRCode(document.getElementById("qrCode"),{text:songURL,width:200,height:200});
+/* ULTRA CHAOS */
+function triggerUltraChaos(){
+  ultraChaos=true;
+  showToast("🧨 ULTRA CHAOS UNLOCKED");
+  emojiRain(42);
+  miniConfettiBurst(100);
+  launchConfetti(180);
+  unlockAchievement("konami","ULTRA CHAOS","You entered the sacred code.","🕹️");
+  bigMessage("🧨 ULTRA CHAOS MODE", `Okay ${currentName}… you found the secret. Respect 😌💖`);
 }
 
+/* Konami Code + "G" key */
+const konami = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+let konamiPos = 0;
+
+document.addEventListener("keydown",(e)=>{
+  const key = e.key;
+  if(key === konami[konamiPos] || key.toLowerCase() === konami[konamiPos]){
+    konamiPos++;
+    if(konamiPos === konami.length){
+      konamiPos = 0;
+      triggerUltraChaos();
+    }
+  } else {
+    konamiPos = 0;
+  }
+
+  if(e.key.toLowerCase() === "g"){
+    showToast("💻 Gloria.exe has stopped resisting");
+    unlockAchievement("gkey","Secret Key","Pressed G like a hacker.","⌨️");
+  }
+});
+
+/* Triple-tap anywhere => Stealth Romantic Mode toggle */
+document.addEventListener("touchstart", ()=>{
+  tripleTapCount++;
+  clearTimeout(tripleTapTimer);
+  tripleTapTimer = setTimeout(()=>{ tripleTapCount=0; }, 650);
+
+  if(tripleTapCount >= 3){
+    tripleTapCount=0;
+    stealthMode = !stealthMode;
+    showToast(stealthMode ? "🕶️ Stealth Romantic Mode: ON" : "💥 Stealth Romantic Mode: OFF");
+    unlockAchievement("stealth","Stealth Mode","Triple-tap detected.","🕶️");
+  }
+}, {passive:true});
+
+/* Desktop triple-click also toggles stealth mode */
+let clickCount=0;
+let clickTimer=null;
+document.addEventListener("click", ()=>{
+  clickCount++;
+  clearTimeout(clickTimer);
+  clickTimer=setTimeout(()=>{ clickCount=0; }, 450);
+  if(clickCount>=3){
+    clickCount=0;
+    stealthMode=!stealthMode;
+    showToast(stealthMode ? "🕶️ Stealth Romantic Mode: ON" : "💥 Stealth Romantic Mode: OFF");
+    unlockAchievement("stealth2","Stealth Mode","Triple-click detected.","🕶️");
+  }
+});
+
+/* Long-press YES => secret card */
+let yesHoldTimer=null;
+function startYesHold(){
+  clearTimeout(yesHoldTimer);
+  yesHoldTimer=setTimeout(()=>{
+    bigMessage("😌 Secret Detected", `Good choice, ${currentName}. I like your style.`);
+    unlockAchievement("holdyes","Committed","Held YES. That’s confidence.","🫶");
+  }, 1200);
+}
+function endYesHold(){ clearTimeout(yesHoldTimer); }
+
+yesBtn.addEventListener("touchstart", startYesHold, {passive:true});
+yesBtn.addEventListener("touchend", endYesHold);
+yesBtn.addEventListener("touchcancel", endYesHold);
+
+// Desktop press-and-hold (mouse)
+yesBtn.addEventListener("mousedown", startYesHold);
+document.addEventListener("mouseup", endYesHold);
+
+/* Heart hunt */
+function spawnHeart(){
+  const h=document.createElement("div");
+  h.textContent="💗";
+  h.style.position="fixed";
+  h.style.left = `${10 + Math.random()*80}vw`;
+  h.style.top  = `${10 + Math.random()*75}vh`;
+  h.style.zIndex=999;
+  h.style.cursor="pointer";
+  h.style.transform="scale(1)";
+  h.style.transition="transform .15s ease, opacity .15s ease";
+  h.style.userSelect="none";
+  h.title="👀";
+
+  h.addEventListener("click", ()=>{
+    h.style.transform="scale(1.4)";
+    h.style.opacity="0";
+    setTimeout(()=>h.remove(),150);
+    unlockAchievement("heart","Found It!","You found the hidden heart.","💗");
+    showToast("💗 Easter egg found!");
+    miniConfettiBurst(45);
+  });
+
+  document.body.appendChild(h);
+  setTimeout(()=>{ if(document.body.contains(h)) h.remove(); }, 5500);
+}
+
+// Occasionally spawn (more often in ultra chaos)
+setInterval(()=>{
+  const chance = ultraChaos ? 0.18 : 0.08;
+  if(Math.random() < chance) spawnHeart();
+}, 3800);
+
+/* ========= RESTART ========= */
 restartBtn.addEventListener('click',()=>{
   success.style.display='none';
   mainCard.style.display='block';
@@ -826,6 +962,10 @@ restartBtn.addEventListener('click',()=>{
   apologyTypingStarted = false;
   if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
   lastApologyAt = 0;
+
+  // keep easter eggs toggles
+  ultraChaos=false;
+  stealthMode=false;
 
   noBtn.textContent="No 🙃";
   noBtn.style.transform='translate(0px,0px) scale(1)';
@@ -839,9 +979,10 @@ restartBtn.addEventListener('click',()=>{
   rerollNickname();
 });
 
+/* ========= INIT ========= */
 (function init(){
   rerollNickname();
-  setTimeout(()=>whisper("hi baby… 💖"), 600);
+  setTimeout(()=>whisper("hi mi amor… 💖"), 600);
 })();
 </script>
 
