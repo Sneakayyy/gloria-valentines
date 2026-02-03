@@ -12,6 +12,8 @@
   --ink:#2a2438;
   --pink:#ff4d8d;
   --pink2:#ff79a8;
+  --card:#ffffffcc;
+  --shadow:0 20px 60px rgba(0,0,0,.10);
 }
 
 *{box-sizing:border-box}
@@ -27,18 +29,29 @@ body{
     radial-gradient(1200px 800px at 20% 10%,var(--bg2),transparent 60%),
     radial-gradient(900px 700px at 80% 30%,#ffd1e3,transparent 55%),
     linear-gradient(135deg,var(--bg1),#fff);
+
+  /* SCROLL FIX */
   overflow-x:hidden;
   overflow-y:auto;
-  padding:40px 0;
   -webkit-overflow-scrolling:touch;
+  padding:40px 0;
+}
+
+.hearts{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.25;
+  z-index:0;
 }
 
 .card{
   width:min(760px,92vw);
-  background:#ffffffdd;
+  background:var(--card);
+  border:1px solid rgba(255,77,141,.25);
   border-radius:28px;
+  box-shadow:var(--shadow);
   padding:32px 28px;
-  box-shadow:0 20px 60px rgba(0,0,0,.10);
   backdrop-filter:blur(10px);
   position:relative;
   z-index:1;
@@ -62,6 +75,7 @@ button{
   font-size:18px;
   font-weight:800;
   cursor:pointer;
+  touch-action:manipulation;
   transition:transform .15s ease,box-shadow .15s ease;
 }
 
@@ -80,20 +94,15 @@ button{
   z-index:1;
 }
 
-.success{display:none;text-align:center;}
-.optionArea{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:18px;}
-
-.resultCard{
-  margin:18px auto 0;
-  width:min(560px,94%);
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 12px 26px rgba(0,0,0,.07);
-  animation:pop .3s ease-out;
+.footer{
+  text-align:center;
+  font-size:12px;
+  color:rgba(42,36,56,.55);
+  margin-top:16px;
 }
 
-@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.success{display:none;text-align:center;animation:pop .25s ease-out;}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
 
 .confetti{
   position:fixed;
@@ -116,64 +125,29 @@ button{
   to{transform:translateY(120vh) rotate(520deg);}
 }
 
-/* Bouquet animation */
-@keyframes bouquetReveal {
-  0% { transform: translateY(20px) rotate(-4deg) scale(.95); opacity: 0; }
-  60% { transform: translateY(-4px) rotate(2deg) scale(1.02); opacity: 1; }
-  100% { transform: translateY(0) rotate(0deg) scale(1); }
+.optionArea{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  margin-top:18px;
 }
 
-.bouquet-pop{
-  animation: bouquetReveal .5s cubic-bezier(.22,1,.36,1);
+.resultCard{
+  margin:18px auto 0;
+  width:min(560px,94%);
+  background:#fff;
+  border:1px solid rgba(255,77,141,.18);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 12px 26px rgba(0,0,0,.07);
+  animation:pop .25s ease-out;
 }
 
-/* Hover glow */
-.bouquet-img{
-  transition: transform .18s ease, box-shadow .18s ease;
-}
-
-@media (hover: hover) and (pointer: fine){
-  .bouquet-img:hover{
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 18px 40px rgba(255,77,141,.25);
-  }
-}
-
-/* Pulse */
-@keyframes bouquetPulse{
-  0%{transform:scale(1);}
-  40%{transform:scale(1.05);}
-  100%{transform:scale(1);}
-}
-.bouquet-pulse{animation: bouquetPulse .35s ease-out;}
-
-/* Hearts */
-.heart-trail{
-  position:absolute;
-  pointer-events:none;
-  animation:floatHeart 1.8s ease-out forwards;
-}
-
-@keyframes floatHeart{
-  0%{opacity:0;transform:translateY(0px) scale(.7) rotate(0deg);}
-  20%{opacity:1;}
-  100%{opacity:0;transform:translateY(-110px) scale(1.2) rotate(25deg);}
-}
-
-/* Screen glow */
-#screenGlow{
-  position:fixed;
-  inset:0;
-  background:radial-gradient(circle at center,
-    rgba(255,77,141,.25) 0%,
-    rgba(255,77,141,.15) 40%,
-    transparent 70%);
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .5s ease;
-  z-index:3;
-}
-.glow-active{opacity:1;}
+.qrWrap{text-align:center;display:grid;place-items:center;gap:10px;}
+.qrBox{padding:12px;border-radius:18px;border:1px solid rgba(255,77,141,.20);}
+.primaryBtn{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff;}
+.tiny{font-size:12px;opacity:.65;margin-top:8px;}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -189,6 +163,8 @@ button{
     <button id="yesBtn">Yes 💖</button>
     <button id="noBtn">No 🙃</button>
   </div>
+
+  <div class="footer">Warning: the “No” button is… dramatic.</div>
 </div>
 
 <div class="confetti" id="confetti"></div>
@@ -200,14 +176,14 @@ button{
 <div class="card success" id="success">
   <h2>YAY — GLORIA SAID YES 😌💖</h2>
   <p>Pick your Valentine reward:</p>
+
   <div class="optionArea" id="optionArea"></div>
   <div id="optionResult"></div>
+
   <div class="buttons" style="margin-top:24px;">
     <button id="restartBtn">Restart 🔁</button>
   </div>
 </div>
-
-<div id="screenGlow"></div>
 
 <script>
 const mainCard=document.getElementById('mainCard');
@@ -236,23 +212,23 @@ document.addEventListener('click',()=>{
   }
 });
 
-const noTexts=["No 🙃","Are you sure? 😭","Gloriaaa pls 🥺","Come on 💔","I told my mom 😩"];
+const noTexts=["No 🙃","Are you sure? 😭","Gloriaaa pls 🥺","Come on 💔","I told my mom 😩","Yes looks better 👀","Still nope? 😶","Fine 😔","Last chance 😤"];
 let noCount=0;
 
-yesBtn.onclick=()=>{
+yesBtn.addEventListener('click',()=>{
   mainCard.style.display='none';
   success.style.display='block';
   launchConfetti();
   showOptions();
-};
+});
 
-noBtn.onclick=(e)=>{
+noBtn.addEventListener('click',(e)=>{
   e.preventDefault();
   noCount++;
   if(noCount<noTexts.length) noBtn.textContent=noTexts[noCount];
-  yesBtn.style.transform=`scale(${Math.min(1+(noCount*.08),1.6)})`;
-  noBtn.style.transform=`translate(${(Math.random()-.5)*8}px, ${(Math.random()-.5)*8}px)`;
-};
+  yesBtn.style.transform=`scale(${Math.min(1+(noCount*0.08),1.65)})`;
+  noBtn.style.transform=`translate(${(Math.random()-0.5)*8}px, ${(Math.random()-0.5)*8}px)`;
+});
 
 function launchConfetti(cnt=120){
   confetti.innerHTML='';
@@ -260,64 +236,50 @@ function launchConfetti(cnt=120){
   const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
   for(let i=0;i<cnt;i++){
     const p=document.createElement('i');
+    const sz=8+Math.random()*10;
+    p.style.width=`${sz}px`;
+    p.style.height=`${sz*1.4}px`;
     p.style.left=`${Math.random()*100}vw`;
     p.style.top=`${-10-Math.random()*20}vh`;
     p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration=`${1.2+Math.random()*1.2}s`;
     confetti.appendChild(p);
   }
-  setTimeout(()=>confetti.style.display='none',2400);
+  setTimeout(()=>{confetti.style.display='none';},2400);
 }
 
 function showOptions(){
   optionArea.innerHTML='';
   optionResult.innerHTML='';
   const opts=[
-    {t:"🌻 Bouquet of Sunflowers & Lilies",a:showBouquet},
-    {t:"💌 A Love Letter",a:()=>{optionResult.innerHTML=`<div class="resultCard"><h3>💌 To Gloria</h3><p>Gloria,<br><br>You make everything feel lighter, warmer, easier...<br><br>— Anthony 💖</p></div>`;}},
+    {t:"🌻 Bouquet of Sunflowers & Lilies",a:()=>{optionResult.innerHTML=`<div class="resultCard"><h3>Sunflowers & Lilies 🌻🤍</h3><p>A beautiful bouquet just for you, Gloria.</p></div>`;}},
+    {t:"💌 A Love Letter",a:()=>{optionResult.innerHTML=`<div class="resultCard">
+      <h3>💌 To Gloria</h3>
+      <p>
+      Gloria,<br><br>
+      I know this website is a little dramatic (okay… very dramatic),
+      but I just wanted to do something thoughtful and fun —
+      because that’s how you make me feel.<br><br>
+      You have this effortless way of being yourself —
+      your smile, your energy, the little things you say
+      that somehow stay in my head.<br><br>
+      Being around you just feels easy. Comfortable. Good.<br><br>
+      I’m genuinely grateful to know you.
+      And if you’ll let me,
+      I’d love to keep making memories with you —
+      more laughs, more moments, more “remember when…” stories.<br><br>
+      Also… I promise snacks.
+      And at least one cute selfie together.<br><br>
+      <strong>— Anthony 💖</strong>
+      </p></div>`;}},
     {t:"🎵 QR to Song",a:showQR}
   ];
   opts.sort(()=>Math.random()-0.5);
-  opts.forEach(o=>{const b=document.createElement('button');b.textContent=o.t;b.onclick=o.a;optionArea.appendChild(b);});
-}
-
-function showBouquet(){
-  optionResult.innerHTML=`
-  <div class="resultCard" style="position:relative;text-align:center;">
-    <h3>Sunflowers & Lilies 🌻🤍</h3>
-    <img id="bouquetImg" class="bouquet-pop bouquet-img"
-      src="bouquet.png"
-      style="width:100%;max-width:320px;border-radius:16px;margin:14px auto;display:block;">
-    <p>Hand drawn just for you 💖</p>
-  </div>`;
-
-  const img=document.getElementById('bouquetImg');
-  const glow=document.getElementById('screenGlow');
-
-  img.addEventListener('pointerdown',(ev)=>{
-    img.classList.remove("bouquet-pulse");
-    void img.offsetWidth;
-    img.classList.add("bouquet-pulse");
-
-    glow.classList.add("glow-active");
-    setTimeout(()=>glow.classList.remove("glow-active"),500);
-
-    const rect=img.getBoundingClientRect();
-    const x=ev.clientX-rect.left;
-    const y=ev.clientY-rect.top;
-
-    const hearts=["❤️","💖","💗"];
-    const parent=img.parentElement;
-
-    for(let i=0;i<8;i++){
-      const h=document.createElement("span");
-      h.className="heart-trail";
-      h.textContent=hearts[Math.floor(Math.random()*hearts.length)];
-      h.style.fontSize=`${14+Math.random()*10}px`;
-      h.style.left=`${x+(Math.random()-.5)*24}px`;
-      h.style.top=`${y+(Math.random()-.5)*24}px`;
-      parent.appendChild(h);
-      setTimeout(()=>h.remove(),1800);
-    }
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.textContent=o.t;
+    b.onclick=o.a;
+    optionArea.appendChild(b);
   });
 }
 
@@ -325,19 +287,24 @@ function showQR(){
   const songURL="https://open.spotify.com/track/3HxpSe02QPSIQLDqT6Foj9?si=hhz1Om2kQCSIw_KqFQKMtg";
   optionResult.innerHTML=`<div class="resultCard">
     <h3>A little surprise for you 🎶</h3>
-    <div id="qrCode"></div>
-    <button onclick="window.open('${songURL}','_blank')">Open It 💖</button>
-  </div>`;
+    <div class="qrWrap">
+      <div class="qrBox"><div id="qrCode"></div></div>
+      <button class="primaryBtn" onclick="window.open('${songURL}','_blank')">Open It 💖</button>
+      <div class="tiny">Scan it like it’s a secret love mission 😌</div>
+    </div></div>`;
   new QRCode(document.getElementById("qrCode"),{text:songURL,width:200,height:200});
 }
 
-restartBtn.onclick=()=>{
+restartBtn.addEventListener('click',()=>{
   success.style.display='none';
   mainCard.style.display='block';
   noCount=0;
   noBtn.textContent="No 🙃";
+  noBtn.style.transform='translate(0px,0px)';
   yesBtn.style.transform='scale(1)';
-};
+  optionArea.innerHTML='';
+  optionResult.innerHTML='';
+});
 </script>
 
 </body>
