@@ -76,7 +76,7 @@ button{
   font-weight:800;
   cursor:pointer;
   touch-action:manipulation;
-  transition:transform .15s ease,box-shadow .15s ease;
+  transition:transform .15s ease,box-shadow .15s ease, opacity .15s ease;
 }
 
 #yesBtn{
@@ -154,9 +154,76 @@ button{
   from{opacity:0; transform: translateY(8px) scale(.98);}
   to{opacity:1; transform: translateY(0) scale(1);}
 }
-.bouquet-img{
-  animation: fadeInImage .35s ease-out;
+.bouquet-img{ animation: fadeInImage .35s ease-out; }
+
+/* ===== CHAOS MODE ===== */
+@keyframes shakeBtn {
+  0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-2px,1px)}
+  40%{transform:translate(2px,-1px)}
+  60%{transform:translate(-2px,-1px)}
+  80%{transform:translate(2px,1px)}
 }
+.shake { animation: shakeBtn .25s linear; }
+
+@keyframes flipNo { from{transform:rotateY(0)} to{transform:rotateY(360deg)} }
+.flip { animation: flipNo .45s ease; }
+
+@keyframes screenWiggle {
+  0%,100%{transform:translate(0,0)}
+  25%{transform:translate(1px,-1px)}
+  50%{transform:translate(-1px,1px)}
+  75%{transform:translate(1px,1px)}
+}
+.wiggle { animation: screenWiggle .18s linear; }
+
+.toast {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(255,77,141,.25);
+  box-shadow:0 18px 36px rgba(0,0,0,.12);
+  border-radius:999px;
+  padding:10px 14px;
+  font-weight:800;
+  z-index:999;
+  opacity:0;
+  transition:opacity .18s ease, transform .18s ease;
+  pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(-6px); }
+
+.emoji {
+  position:fixed;
+  top:-30px;
+  font-size:22px;
+  z-index:2;
+  pointer-events:none;
+  animation: emojiFall 1.7s linear forwards;
+  opacity:.95;
+}
+@keyframes emojiFall {
+  to { transform:translateY(110vh) rotate(360deg); opacity:0.95; }
+}
+
+.loadingBarWrap{
+  width:min(520px,92%);
+  margin:14px auto 0;
+  height:12px;
+  border-radius:999px;
+  border:1px solid rgba(255,77,141,.25);
+  background:rgba(255,255,255,.6);
+  overflow:hidden;
+}
+.loadingBar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(135deg, var(--pink), var(--pink2));
+  animation: loadBar 2s ease forwards;
+}
+@keyframes loadBar { to { width:100%; } }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -217,11 +284,34 @@ document.addEventListener('click',()=>{
         if(v>=0.35){bgMusic.volume=0.35;clearInterval(fade);}
         else bgMusic.volume=v;
       },100);
-    });
+    }).catch(()=>{});
   }
 });
 
-const noTexts=["No 🙃","Are you sure? 😭","Gloriaaa pls 🥺","Come on 💔","I told my mom 😩","Yes looks better 👀","Still nope? 😶","Fine 😔","Last chance 😤"];
+const noTexts = [
+  "No 🙃",
+  "Are you sure? 😭",
+  "Gloriaaaa pls 🥺",
+  "Come on 💔",
+  "I told my mom 😩",
+  "The confetti is literally waiting…",
+  "This is getting personal 😤",
+  "You’re breaking my heart in 4K 📺💀",
+  "I made a whole website… respectfully",
+  "Gloria… be serious right now 😶",
+  "Okay now I’m dramatic",
+  "Press Yes and I’ll owe you snacks",
+  "I’m calling customer support",
+  "System suggestion: choose Yes 💖",
+  "Your Valentine has crashed (me)",
+  "No has been temporarily disabled 😌",
+  "Final final final chance 😤",
+  "Stop clicking No like it’s a hobby",
+  "Yes is looking kinda cute though 👀",
+  "I’m gonna tell the sunflowers 🌻",
+  "Okay okay okay… YES pls 💖"
+];
+
 let noCount=0;
 
 yesBtn.addEventListener('click',()=>{
@@ -231,12 +321,122 @@ yesBtn.addEventListener('click',()=>{
   showOptions();
 });
 
+/* ===== CHAOS HELPERS ===== */
+function showToast(msg){
+  let t = document.getElementById("toast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "toast";
+    t.className = "toast";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1200);
+}
+
+function emojiRain(count=14){
+  const em = ["💖","💘","💗","✨","🌟","😭","😤","🌻","🫶"];
+  for(let i=0;i<count;i++){
+    const e = document.createElement("div");
+    e.className = "emoji";
+    e.textContent = em[Math.floor(Math.random()*em.length)];
+    e.style.left = `${Math.random()*100}vw`;
+    e.style.animationDuration = `${1.1 + Math.random()*1.2}s`;
+    e.style.fontSize = `${18 + Math.random()*14}px`;
+    document.body.appendChild(e);
+    setTimeout(()=>e.remove(), 2200);
+  }
+}
+
+function miniConfettiBurst(cnt=35){
+  confetti.innerHTML='';
+  confetti.style.display='block';
+  const cols=['#ff4d8d','#ff79a8','#ffd166','#9bf6ff','#bdb2ff','#caffbf'];
+  for(let i=0;i<cnt;i++){
+    const p=document.createElement('i');
+    const sz=6+Math.random()*9;
+    p.style.width=`${sz}px`;
+    p.style.height=`${sz*1.3}px`;
+    p.style.left=`${Math.random()*100}vw`;
+    p.style.top=`${-10-Math.random()*20}vh`;
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration=`${0.9+Math.random()*0.8}s`;
+    confetti.appendChild(p);
+  }
+  setTimeout(()=>{confetti.style.display='none';},1600);
+}
+
+function glitchYes(){
+  yesBtn.style.boxShadow = "0 0 38px rgba(255,77,141,.85)";
+  yesBtn.style.transform = `scale(${Math.min(1.15 + noCount*0.06, 1.95)})`;
+  const labels = ["Yes 💖","YES 💖","YESSS 💖","PRESS ME 💖"];
+  yesBtn.textContent = labels[Math.min(labels.length-1, Math.floor(noCount/4))];
+}
+
+/* ===== FULL CHAOS MODE NO CLICK ===== */
 noBtn.addEventListener('click',(e)=>{
   e.preventDefault();
   noCount++;
-  if(noCount<noTexts.length) noBtn.textContent=noTexts[noCount];
-  yesBtn.style.transform=`scale(${Math.min(1+(noCount*0.08),1.65)})`;
-  noBtn.style.transform=`translate(${(Math.random()-0.5)*8}px, ${(Math.random()-0.5)*8}px)`;
+
+  // Update No text
+  noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
+
+  // YES becomes destiny
+  glitchYes();
+
+  // No button shrinks + jitters
+  const shrink = Math.max(0.58, 1 - noCount*0.03);
+  noBtn.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px) scale(${shrink})`;
+
+  // Shake + sometimes flip
+  noBtn.classList.remove("shake","flip");
+  void noBtn.offsetWidth;
+  noBtn.classList.add("shake");
+  if (noCount % 3 === 0) noBtn.classList.add("flip");
+
+  // Screen wiggle (subtle)
+  document.body.classList.remove("wiggle");
+  void document.body.offsetWidth;
+  document.body.classList.add("wiggle");
+  setTimeout(()=>document.body.classList.remove("wiggle"), 220);
+
+  // Random chaos events
+  if (noCount === 4) showToast("📩 Mom: “She better say yes.”");
+  if (noCount === 6) { emojiRain(18); miniConfettiBurst(45); }
+  if (noCount === 8) showToast("⚠️ Warning: Excessive ‘No’ detected");
+  if (noCount === 10) showToast("System override loading…");
+  if (noCount === 12) {
+    const oldNo = noBtn.textContent;
+    const oldYes = yesBtn.textContent;
+    noBtn.textContent = "Yes 💖 (nice try)";
+    yesBtn.textContent = "No 🙃 (absolutely not)";
+    setTimeout(()=>{ noBtn.textContent = oldNo; yesBtn.textContent = oldYes; }, 900);
+  }
+
+  // 15th click: disable No for 2 seconds + fake loading bar
+  if (noCount === 15) {
+    noBtn.disabled = true;
+    showToast("No is taking a break 😌");
+    optionResult.innerHTML = `
+      <div class="resultCard" style="text-align:center;">
+        <h3>Updating Valentine settings…</h3>
+        <div class="loadingBarWrap"><div class="loadingBar"></div></div>
+        <p class="tiny">Please hold while Cupid reboots.</p>
+      </div>
+    `;
+    setTimeout(()=>{
+      noBtn.disabled = false;
+      optionResult.innerHTML = "";
+      showToast("No is back (unfortunately)");
+    }, 2000);
+  }
+
+  // After enough No’s, the universe intervenes 😈
+  if (noCount >= 18) {
+    showToast("Auto-selecting YES for your safety 💖");
+    setTimeout(()=>yesBtn.click(), 700);
+  }
 });
 
 function launchConfetti(cnt=120){
@@ -261,11 +461,8 @@ function showOptions(){
   optionArea.innerHTML='';
   optionResult.innerHTML='';
   const opts=[
-    {
-      t:"🌻 Bouquet of Sunflowers & Lilies",
-      a:showBouquet
-    },
-    {t:"💌 A Love Letter",a:()=>{optionResult.innerHTML=`<div class="resultCard">
+    { t:"🌻 Bouquet of Sunflowers & Lilies", a:showBouquet },
+    { t:"💌 A Love Letter", a:()=>{ optionResult.innerHTML=`<div class="resultCard">
       <h3>💌 To Gloria</h3>
       <p>
       Gloria,<br><br>
@@ -283,9 +480,10 @@ function showOptions(){
       Also… I promise snacks.
       And at least one cute selfie together.<br><br>
       <strong>— Anthony 💖</strong>
-      </p></div>`;}},
-    {t:"🎵 QR to Song",a:showQR}
+      </p></div>`; } },
+    { t:"🎵 QR to Song", a:showQR }
   ];
+
   opts.sort(()=>Math.random()-0.5);
   opts.forEach(o=>{
     const b=document.createElement('button');
@@ -295,7 +493,7 @@ function showOptions(){
   });
 }
 
-/* ✅ Bouquet option opens image (uses bouquet.PNG exactly) */
+/* Bouquet option opens image (uses bouquet.PNG exactly) */
 function showBouquet(){
   optionResult.innerHTML = `
     <div class="resultCard" style="text-align:center;">
@@ -340,10 +538,17 @@ function showQR(){
 restartBtn.addEventListener('click',()=>{
   success.style.display='none';
   mainCard.style.display='block';
+
+  // reset chaos
   noCount=0;
   noBtn.textContent="No 🙃";
-  noBtn.style.transform='translate(0px,0px)';
+  noBtn.style.transform='translate(0px,0px) scale(1)';
+  noBtn.disabled=false;
+
+  yesBtn.textContent="Yes 💖";
   yesBtn.style.transform='scale(1)';
+  yesBtn.style.boxShadow="0 14px 30px rgba(255,77,141,.35)";
+
   optionArea.innerHTML='';
   optionResult.innerHTML='';
 });
