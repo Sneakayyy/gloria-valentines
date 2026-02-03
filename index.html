@@ -30,19 +30,10 @@ body{
     radial-gradient(900px 700px at 80% 30%,#ffd1e3,transparent 55%),
     linear-gradient(135deg,var(--bg1),#fff);
 
-  /* SCROLL FIX */
   overflow-x:hidden;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
   padding:40px 0;
-}
-
-.hearts{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  opacity:.25;
-  z-index:0;
 }
 
 .card{
@@ -120,10 +111,7 @@ button{
   border-radius:2px;
   animation:fall 1.8s linear forwards;
 }
-
-@keyframes fall{
-  to{transform:translateY(120vh) rotate(520deg);}
-}
+@keyframes fall{ to{transform:translateY(120vh) rotate(520deg);} }
 
 .optionArea{
   display:flex;
@@ -149,7 +137,7 @@ button{
 .primaryBtn{background:linear-gradient(135deg,var(--pink),var(--pink2));color:#fff;}
 .tiny{font-size:12px;opacity:.65;margin-top:8px;}
 
-/* Bouquet image open animation */
+/* Bouquet animation */
 @keyframes fadeInImage{
   from{opacity:0; transform: translateY(8px) scale(.98);}
   to{opacity:1; transform: translateY(0) scale(1);}
@@ -204,9 +192,7 @@ button{
   animation: emojiFall 1.7s linear forwards;
   opacity:.95;
 }
-@keyframes emojiFall {
-  to { transform:translateY(110vh) rotate(360deg); opacity:0.95; }
-}
+@keyframes emojiFall { to { transform:translateY(110vh) rotate(360deg); opacity:0.95; } }
 
 .loadingBarWrap{
   width:min(520px,92%);
@@ -224,6 +210,40 @@ button{
   animation: loadBar 2s ease forwards;
 }
 @keyframes loadBar { to { width:100%; } }
+
+/* ===== ACHIEVEMENTS ===== */
+.achievement{
+  position:fixed;
+  top:18px;
+  right:18px;
+  width:min(320px,86vw);
+  background:rgba(255,255,255,.95);
+  border:1px solid rgba(255,77,141,.30);
+  box-shadow:0 18px 44px rgba(0,0,0,.16);
+  border-radius:18px;
+  padding:12px 14px;
+  z-index:1000;
+  opacity:0;
+  transform:translateY(-10px) scale(.98);
+  transition:opacity .18s ease, transform .18s ease;
+  pointer-events:none;
+}
+.achievement.show{ opacity:1; transform:translateY(0) scale(1); }
+.ach-title{
+  font-weight:900;
+  font-size:14px;
+  letter-spacing:.3px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.ach-sub{ font-size:12px; opacity:.75; margin-top:4px; }
+.badge{
+  width:28px;height:28px;border-radius:10px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg, rgba(255,77,141,.18), rgba(255,121,168,.14));
+  border:1px solid rgba(255,77,141,.25);
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -289,39 +309,36 @@ document.addEventListener('click',()=>{
 });
 
 const noTexts = [
-  "No 🙃",
-  "Are you sure? 😭",
-  "Gloriaaaa pls 🥺",
-  "Come on 💔",
-  "I told my mom 😩",
-  "The confetti is literally waiting…",
-  "This is getting personal 😤",
-  "You’re breaking my heart in 4K 📺💀",
-  "I made a whole website… respectfully",
-  "Gloria… be serious right now 😶",
-  "Okay now I’m dramatic",
-  "Press Yes and I’ll owe you snacks",
-  "I’m calling customer support",
-  "System suggestion: choose Yes 💖",
-  "Your Valentine has crashed (me)",
-  "No has been temporarily disabled 😌",
-  "Final final final chance 😤",
-  "Stop clicking No like it’s a hobby",
-  "Yes is looking kinda cute though 👀",
-  "I’m gonna tell the sunflowers 🌻",
+  "No 🙃","Are you sure? 😭","Gloriaaaa pls 🥺","Come on 💔","I told my mom 😩",
+  "The confetti is literally waiting…","This is getting personal 😤","You’re breaking my heart in 4K 📺💀",
+  "I made a whole website… respectfully","Gloria… be serious right now 😶","Okay now I’m dramatic",
+  "Press Yes and I’ll owe you snacks","I’m calling customer support","System suggestion: choose Yes 💖",
+  "Your Valentine has crashed (me)","No has been temporarily disabled 😌","Final final final chance 😤",
+  "Stop clicking No like it’s a hobby","Yes is looking kinda cute though 👀","I’m gonna tell the sunflowers 🌻",
   "Okay okay okay… YES pls 💖"
 ];
 
 let noCount=0;
+const earned = new Set();
 
 yesBtn.addEventListener('click',()=>{
+  if (noCount === 0) {
+    unlockAchievement("hopeless","Hopeless Romantic","Pressed Yes without hesitation. Respect.","💞");
+    miniConfettiBurst(55);
+    emojiRain(10);
+  }
+  if (noCount === 1) {
+    unlockAchievement("tsundere","Tsundere","Clicked No once… then folded immediately.","😤💖");
+    miniConfettiBurst(45);
+    emojiRain(8);
+  }
+
   mainCard.style.display='none';
   success.style.display='block';
   launchConfetti();
   showOptions();
 });
 
-/* ===== CHAOS HELPERS ===== */
 function showToast(msg){
   let t = document.getElementById("toast");
   if(!t){
@@ -336,7 +353,7 @@ function showToast(msg){
 }
 
 function emojiRain(count=14){
-  const em = ["💖","💘","💗","✨","🌟","😭","😤","🌻","🫶"];
+  const em = ["💖","💘","💗","✨","🌟","😭","😤","🌻","🫶","💞"];
   for(let i=0;i<count;i++){
     const e = document.createElement("div");
     e.className = "emoji";
@@ -374,34 +391,60 @@ function glitchYes(){
   yesBtn.textContent = labels[Math.min(labels.length-1, Math.floor(noCount/4))];
 }
 
-/* ===== FULL CHAOS MODE NO CLICK ===== */
+function unlockAchievement(key, title, subtitle, emoji){
+  if (earned.has(key)) return;
+  earned.add(key);
+
+  let a = document.getElementById("achievement");
+  if(!a){
+    a = document.createElement("div");
+    a.id = "achievement";
+    a.className = "achievement";
+    document.body.appendChild(a);
+  }
+
+  a.innerHTML = `
+    <div class="ach-title">
+      <div class="badge">${emoji}</div>
+      <div>Achievement Unlocked: ${title}</div>
+    </div>
+    <div class="ach-sub">${subtitle}</div>
+  `;
+
+  a.classList.add("show");
+  setTimeout(()=>a.classList.remove("show"), 1800);
+}
+
+function checkAchievements(){
+  if (noCount === 3)  unlockAchievement("rookie","Heartbreaker (Rookie)","Clicked No three times. Bold.","🏅");
+  if (noCount === 7)  unlockAchievement("pro","Professional Heartbreaker","Seven No’s? That’s talent.","🏆");
+  if (noCount === 10) unlockAchievement("villain","Romantic Villain Arc","Ten No’s unlocked your villain era.","😈");
+  if (noCount === 13) unlockAchievement("speedrun","No% Speedrun","You’re speedrunning heartbreak.","⏱️");
+  if (noCount === 17) unlockAchievement("legend","Legendary Resistance","Seventeen No’s… okay you’re powerful.","🌟");
+}
+
 noBtn.addEventListener('click',(e)=>{
   e.preventDefault();
   noCount++;
 
-  // Update No text
-  noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
+  checkAchievements();
 
-  // YES becomes destiny
+  noBtn.textContent = noTexts[Math.min(noCount, noTexts.length-1)];
   glitchYes();
 
-  // No button shrinks + jitters
   const shrink = Math.max(0.58, 1 - noCount*0.03);
   noBtn.style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px) scale(${shrink})`;
 
-  // Shake + sometimes flip
   noBtn.classList.remove("shake","flip");
   void noBtn.offsetWidth;
   noBtn.classList.add("shake");
   if (noCount % 3 === 0) noBtn.classList.add("flip");
 
-  // Screen wiggle (subtle)
   document.body.classList.remove("wiggle");
   void document.body.offsetWidth;
   document.body.classList.add("wiggle");
   setTimeout(()=>document.body.classList.remove("wiggle"), 220);
 
-  // Random chaos events
   if (noCount === 4) showToast("📩 Mom: “She better say yes.”");
   if (noCount === 6) { emojiRain(18); miniConfettiBurst(45); }
   if (noCount === 8) showToast("⚠️ Warning: Excessive ‘No’ detected");
@@ -414,7 +457,6 @@ noBtn.addEventListener('click',(e)=>{
     setTimeout(()=>{ noBtn.textContent = oldNo; yesBtn.textContent = oldYes; }, 900);
   }
 
-  // 15th click: disable No for 2 seconds + fake loading bar
   if (noCount === 15) {
     noBtn.disabled = true;
     showToast("No is taking a break 😌");
@@ -432,7 +474,6 @@ noBtn.addEventListener('click',(e)=>{
     }, 2000);
   }
 
-  // After enough No’s, the universe intervenes 😈
   if (noCount >= 18) {
     showToast("Auto-selecting YES for your safety 💖");
     setTimeout(()=>yesBtn.click(), 700);
@@ -493,32 +534,12 @@ function showOptions(){
   });
 }
 
-/* Bouquet option opens image (uses bouquet.PNG exactly) */
 function showBouquet(){
   optionResult.innerHTML = `
     <div class="resultCard" style="text-align:center;">
       <h3>Sunflowers & Lilies 🌻🤍</h3>
-
-      <img
-        class="bouquet-img"
-        src="bouquet.PNG"
-        alt="Hand drawn bouquet of sunflowers and lilies"
-        style="
-          width:100%;
-          max-width:520px;
-          border-radius:20px;
-          margin:18px auto 8px;
-          display:block;
-          box-shadow:0 20px 40px rgba(0,0,0,.18);
-        "
-      >
-
-      <p style="margin-top:10px;">
-        Hand-drawn just for you, Gloria 💖<br>
-        (Yes, I’m trying to be cute. It’s working.)
-        <br><br>
-        — Anthony
-      </p>
+      <img class="bouquet-img" src="bouquet.PNG" alt="Hand drawn bouquet"
+        style="width:100%;max-width:520px;border-radius:20px;margin:18px auto 8px;display:block;box-shadow:0 20px 40px rgba(0,0,0,.18);">
     </div>
   `;
 }
@@ -539,8 +560,9 @@ restartBtn.addEventListener('click',()=>{
   success.style.display='none';
   mainCard.style.display='block';
 
-  // reset chaos
   noCount=0;
+  earned.clear();
+
   noBtn.textContent="No 🙃";
   noBtn.style.transform='translate(0px,0px) scale(1)';
   noBtn.disabled=false;
